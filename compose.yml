@@ -1,0 +1,40 @@
+services:
+
+  carbon-frontend:
+    build:
+      context: ./web
+      no_cache: true
+      args:
+        GIT_TAG: ${GIT_TAG:?Error GIT_TAG is missing}
+    image: cert-edf/carbon-fe
+    pull_policy: build
+    ports:
+      - 127.0.0.1:8121:80
+
+  carbon-backend:
+    build: 
+      context: ./server/docker
+      no_cache: true
+    image: cert-edf/carbon-be
+    pull_policy: build
+    ports:
+      - 127.0.0.1:8111:8080
+    volumes:
+      - /data/carbon/conf:/conf
+      - /data/carbon/data:/data
+    environment:
+      ROLE: server
+      FUSION_DEBUG: 0
+
+  carbon-synchronizer:
+    build: 
+      context: ./server/docker
+      no_cache: true
+    image: cert-edf/carbon-be
+    pull_policy: build
+    volumes:
+      - /data/carbon/conf:/conf
+      - /data/carbon/data:/data
+    environment:
+      ROLE: synchronizer
+      FUSION_DEBUG: 0

@@ -1,0 +1,55 @@
+[project]
+name = "edf-carbon-core"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["edf", "carbon", "core", "library"]
+description = "EDF Carbon Core Library"
+requires-python = ">=3.12"
+dynamic = ["version"]
+authors = [
+  { name="CERT-EDF", email="cert@edf.fr" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Utilities",
+    "Topic :: Security",
+]
+dependencies = [
+    "edf-fusion~=1.0",
+]
+
+
+[project.urls]
+"Homepage" = "https://github.com/cert-edf/carbon"
+"Repository" = "https://github.com/cert-edf/carbon"
+"Bug Tracker" = "https://github.com/cert-edf/carbon/issues"
+
+
+[build-system]
+requires = ["setuptools>=78", "setuptools_scm>=8.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["edf_carbon_core", "edf_carbon_core.*"]
+
+
+[tool.setuptools_scm]
+root = ".."
+version_file = "edf_carbon_core/__version__.py"
+
+
+[tool.black]
+line-length = 79
+skip-string-normalization = true
+
+
+[tool.isort]
+profile = "black"
+line_length = 79

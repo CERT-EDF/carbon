@@ -1,0 +1,55 @@
+# ------------------------------------------------------------------------------
+# carbon server configuration
+server:
+  host: 127.0.0.1
+  port: 8080
+  client_max_size: 104857600 # 100 MB
+# ------------------------------------------------------------------------------
+# carbon storage configuration
+storage:
+  directory: /data/carbon
+# ------------------------------------------------------------------------------
+# fusion auth api configuration
+auth_api:
+  backend:
+    strategy: basic
+    basic:
+      groups: []
+      users:
+        - username: test
+          digest: argon2-digest-goes-here
+          groups:
+            - DFIR
+    keycloak:
+      url: https://keycloak.domain.lan
+      client_id: carbon
+      realm_name: master
+      client_secret: replace-me-with-a-secret
+      redirect_uri: https://carbon.domain.lan/login
+      include_auth: true
+      verify: true
+  clients: []
+  iron_key: null
+# ------------------------------------------------------------------------------
+# fusion case api configuration
+case_api: {}
+# ------------------------------------------------------------------------------
+# fusion info api configuration
+info_api:
+  auth_required: false
+# ------------------------------------------------------------------------------
+# fusion event api configuration
+event_api:
+  webhook: https://n8n.domain.lan/webhook/carbon
+  api_key: api-key-placeholder
+  api_ssl: true
+  timeout: 5
+# ------------------------------------------------------------------------------
+# fusion constant api configuration
+constant_api:
+  auth_required: true
+  constant_path: constant.yml
+# ------------------------------------------------------------------------------
+# carbon synchronizer configuration
+synchronizer:
+  directory: /data/fusion-syncfs
