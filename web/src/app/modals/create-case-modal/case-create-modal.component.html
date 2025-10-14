@@ -1,0 +1,35 @@
+<section>
+  <div pFocusTrap class="grid grid-cols-2 gap-4 p-4" [formGroup]="caseForm">
+    <p-floatlabel variant="in" class="w-full">
+      <input id="name" formControlName="name" pInputText class="w-full" />
+      <label for="name">Name</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="in" class="w-full">
+      <input id="tsid" formControlName="tsid" pInputText class="w-full" />
+      <label for="tsid">TSID</label>
+    </p-floatlabel>
+    
+    <p-floatlabel variant="in" class="col-span-full w-full">
+      <p-multiselect [options]="acsGroups" [group]="true" [showToggleAll]="false" formControlName="acs" appendTo="body"
+      scrollHeight="250px" display="chip" id="acs" optionLabel="label" optionValue="value" fluid>
+        <ng-template let-group #group>
+            <div class="flex items-center">
+                <img class="mr-2 w-5" />
+                <span>{{ group.label }}</span>
+            </div>
+        </ng-template>
+      </p-multiselect>
+      <label for="acs">acs</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="in" class="col-span-full w-full">
+      <textarea id="description" formControlName="description" pTextarea class="w-full"></textarea>
+      <label for="description">Description</label>
+    </p-floatlabel>
+  </div>
+
+  <div class="mt-4 text-right">
+    <p-button (click)="closeDialog()" text [disabled]="!caseForm.valid" label="Create" />
+  </div>
+</section>

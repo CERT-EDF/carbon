@@ -1,0 +1,520 @@
+@if (isDisplayingSplash) {
+<div class="splash">
+  <div class="splash-dialog">
+    <div class="splash-dialog-content slide-y">
+      @if (caseMeta?.closed) {
+      <div class="splash-dialog-content-cross"><p-button icon="pi pi-times" (click)="this.subscribeToCaseEvents()"
+          text /></div>
+      <h1 class="text-red-500 font-semibold text-2xl mb-2">Closed</h1>
+      <p>This case is currently <b>closed</b>.</p>
+      <p>You can either view it in <b>Real-Only mode</b> or <b>Reopen</b> the case.
+      </p>
+      <div class="flex justify-between items-center pt-4">
+        <div>
+          <p-button icon="pi pi-chevron-left" text label="Back" routerLink="/" />
+        </div>
+
+        <div class="flex gap-4">
+          <p-button severity="help" text icon="pi pi-lock" label="Reopen" (click)="reopenCase()" />
+          <p-button text icon="pi pi-eye" label="Read-only view" (click)="this.subscribeToCaseEvents()" />
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+</div>
+}
+
+<div>
+  <div class="fixed top-4 right-8 aslide-x flex items-center">
+    @if (caseMeta?.closed) {
+    <p-button text icon="pi pi-lock-open" pTooltip="Open Case" severity="success" (click)="reopenCase()" />
+    }
+
+    <p-button text pTooltip="Filters" [icon]="isFilterMode ? 'pi pi-filter-fill' : 'pi pi-filter'"
+      (click)="toggleFilterMode()" />
+    <p-button text pTooltip="Trash" icon="pi pi-trash" (click)="openTrashModal()" severity="danger" />
+    <p-button text pTooltip="Export" tooltipPosition="left" icon="pi pi-file-export" (click)="openExportModal()" />
+    <p-button text pTooltip="Settings" icon="pi pi-cog spin" (click)="openSettingsModal()" />
+  </div>
+
+  <div class="grid fixed top-24 right-8 z-50 w-[515px] max-w-1/5 2xl:max-w-2/5">
+    @if (isFilterMode) {
+    <div @backslideY class="bg-white dark:bg-surface-900 p-4 aslide-y max-h-96 transition overflow-y-auto 
+  whitespace-nowrap border border-gray-100 shadow-sm rounded-md font-normal text-sm">
+      <div [formGroup]="eventForm" class="flex items-center gap-4">
+        <input type="text" size="large" class="h-12" fluid pInputText [formControl]="searchInputRegex"
+          placeholder="Search ..." />
+
+        <div class="flex items-center gap-1">
+          <p-overlaybadge [value]="(selectedSearchPattern |keyvalue).length">
+            <p-button text icon="pi pi-sliders-h" pTooltip="Regex prefill" (click)="searchPatternMenu.toggle($event)" />
+          </p-overlaybadge>
+        </div>
+        <p-menu #searchPatternMenu [popup]="true" appendTo="body" [model]="searchPatternMenuItems">
+          <ng-template #item let-item>
+            <a pRipple class="flex items-center p-menu-item-link" (click)="toggleRegexFilter(item.label)">
+              <span [class]="selectedSearchPattern[item.label] ? 'pi pi-check' : item.icon"></span>
+              <span class="ml-2">{{ item.label }}</span>
+            </a>
+          </ng-template>
+        </p-menu>
+      </div>
+
+      <div class="mt-4 flex items-center justify-end">
+        <div>
+          <p-button text label="Select all" (click)="selectAllCategories()"
+            [disabled]="categories.length == filteredCategories.length" />
+          <p-button text severity="warn" (click)="deselectAllCategories()" label="Deselect all" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-3 mt-2 gap-2">
+        @for (category of categories; track category.name) {
+        <div class="p-4 flex gap-2 select-none shadow rounded justify-start items-center cursor-pointer"
+          (click)="toggleCategoryFilter(category.name)">
+          <img [src]="category.icon" class="w-8" [class.grayscale]="!filteredCategories.includes(category.name)">
+          <span class="truncate text-center"
+            [style.fontWeight]="filteredCategories.includes(category.name) ? '600' : '300'">
+            {{ category.name }}</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <div class="mt-4 bg-white dark:bg-surface-900 p-4 aslide-x max-h-96 transition overflow-y-auto
+    whitespace-nowrap border border-gray-100 shadow-sm rounded-md font-normal text-sm">
+      <h1 class="text-xl font-medium text-slate-700 dark:text-slate-200 mb-2">Tasks</h1>
+      @defer() {
+      @for (pendingEvent of taskEvents; track pendingEvent.guid) {
+      <div class="flex items-center gap-1 mr-2 cursor-pointer leading-loose text-gray-400" pTooltip="Scroll to"
+        tooltipPosition="left" (click)="scrollToEvent(pendingEvent.guid)"
+        [class.text-red-500!]="!closedEventsGUID.has(pendingEvent.guid) && pendingEvent?.duedate && now > getPendingDateObject(pendingEvent?.duedate)">
+        <span class="shrink">{{ closedEventsGUID.has(pendingEvent.guid) ? '☑' : '☐' }}</span>
+        <span class="truncate">{{
+          pendingEvent.title }} @if(!closedEventsGUID.has(pendingEvent.guid) && pendingEvent?.duedate && now >
+          getPendingDateObject(pendingEvent?.duedate)) {(due {{ pendingEvent.duedate | date: 'YYYY-MM-dd' }})}
+        </span>
+        <div class="flex grow justify-end">
+          @if (pendingEvent.assignees) {
+          <span>
+            <p-avatar-group>
+              @for (assignee of pendingEvent.assignees; track $index) {
+              <p-avatar [label]="assignee[0]" shape="circle" styleClass="capitalize size-6 text-xs"
+                [class.bg-blue-200!]="assignee == username" />
+              }
+            </p-avatar-group>
+          </span>
+          } @else {<span>&nbsp;</span>}
+        </div>
+      </div>
+      } @empty {
+      <p class="font-light text-gray-500">
+        No task
+      </p>
+      }
+      } @placeholder (minimum 0.4s) {
+      <div class="grid gap-2">
+        @for(_ of [1,2,3]; track _) {
+        <p-skeleton height="1.3rem" />
+        }
+      </div>
+      }
+    </div>
+  </div>
+
+  <div class="ml-16 mt-10 w-2/3">
+    <div class="flex items-center gap-4">
+      <p-button text icon="pi pi-chevron-left" [routerLink]="'/home'" />
+
+      <div class="flex flex-col ml-4">
+        @defer () {
+        <div class="flex items-center gap-2">
+          <span class="shrink text-sm text-slate-300" pTooltip="Click to copy"
+            [cdkCopyToClipboard]="caseMeta?.tsid || ''">#{{ caseMeta?.tsid || 'N/A' }}</span>
+          @if (caseMeta?.closed) {
+          <span
+            class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-500 dark:text-red-100">Closed</span>
+          }
+          @if (caseMeta?.utc_display) {<span
+            class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-purple-500 dark:text-purple-100">UTC</span>}
+        </div>
+        <h1 class="text-xl font-medium text-slate-700 dark:text-slate-200 md:text-3xl" pTooltip="Click to copy"
+          [cdkCopyToClipboard]="caseMeta?.name || ''">{{ caseMeta?.name }}</h1>
+        } @placeholder (minimum 0.4s) {
+        <div class="flex gap-2">
+          <p-skeleton height="1.3rem" width="80px"></p-skeleton>
+          <p-skeleton height="1.3rem" width="40px"></p-skeleton>
+          <p-skeleton height="1.3rem" width="40px"></p-skeleton>
+        </div>
+        <div class="mt-1"><p-skeleton height="2rem" width="400px"></p-skeleton></div>
+        }
+      </div>
+
+      <p-avatar-group class="flex grow justify-end select-none">
+        @for (user of activeUsers; track user) {
+        <p-avatar [label]="user[0]" [pTooltip]="user" class="capitalize" shape="circle" />
+        }
+      </p-avatar-group>
+    </div>
+
+    <div class="ml-12">
+      @if (!isReadonly) {
+      <div class="fixed top-0 border-l border-dashed h-full"></div>
+      <div
+        class="relative z-50 mb-12 mt-8 p-4 border-s bg-gray-50 rounded-e-md border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+        <div class="ms-6">
+          <span
+            class="absolute flex items-center justify-center bg-gray-50 top-4 w-12 h-12 rounded-full -start-6 ring-4 ring-white dark:bg-gray-800 dark:ring-gray-900">
+            <img class="object-cover rounded-full shadow-lg" src="favicon.png" />
+          </span>
+
+          <div [formGroup]="eventForm" class="flex items-center gap-4">
+            <input type="text" size="large" (keyup.enter)="createEvent()" class="h-12" fluid pInputText
+              formControlName="title" placeholder="Event text..." />
+
+            <div class="flex items-center gap-1">
+              <p-button text pTooltip="Event category" (click)="openCategoryMenu($event)" class="w-14"><img
+                  [src]="getCategoryIcon(eventForm.get('category')?.value)" class="size-7 object-cover"></p-button>
+
+              @if (linkedEventGUID) {
+              <p-button text [pTooltip]="'Will complete event ' + linkedEventGUID" severity="danger" icon="pi pi-times"
+                (click)="cancelLinkedEvent()" />
+              }
+
+              <p-button text icon="pi pi-external-link" size="large" (click)="openEventModal()" />
+            </div>
+          </div>
+        </div>
+      </div>
+      }
+
+      @defer () {
+      @for (eventByDate of displayedEventsByDate | keyvalue: keyDescOrder; track $index) {
+      <div
+        class="relative mb-16 bg-gray-50/50 z-0 rounded-e-md border-s border-gray-200 dark:border-gray-700 dark:bg-gray-800/50">
+        <div
+          class="sticky top-0 left-0 -translate-x-full w-20 z-20 text-right select-none px-4 py-2 rounded-s text-sm text-gray-500 dark:bg-surface-900 shadow-sm">
+          {{ eventByDate.key | date: 'dd MMM. YYYY' }}</div>
+
+        @for (event of eventByDate.value; track event.guid) {
+        <div class="relative ms-6 group/event transition" (click)="openDetailsIfNotSelecting($event, event)">
+          <span class="absolute top-2 flex items-center justify-center w-10 h-10 -start-11 z-10">
+            <img class="rounded-full object-cover" [src]="getCategoryIcon(event.category)" />
+            @if (event.starred) {<span
+              class="absolute -top-1 -right-1 size-5 flex items-center justify-center rounded-full shadow-md bg-white dark:bg-surface-900"><i
+                class="pi pi-star-fill text-yellow-400 text-xs"></i></span>}
+            @if (event.category == 'TASK' && !closedEventsGUID.has(event.guid)) {<span
+              class="absolute left-0 top-0 flex size-3"><span
+                class="absolute inline-flex h-full w-full motion-safe:animate-ping rounded-full bg-violet-300 opacity-75"></span>
+              <span class="relative inline-flex size-3 rounded-full bg-violet-400"></span>
+            </span>}
+          </span>
+
+          <div class="p-4">
+            <div class="relative flex flex-col md:flex-row items-center md:justify-between mb-2">
+              <div class="line-clamp-2 text-gray-700 dark:text-gray-300" [attr.id]="event.guid"
+                [class.font-bold]="unseenEvents.includes(event.guid)">{{ event.title }}</div>
+
+              <div class="flex flex-col md:flex-row items-center justify-center gap-1 text-xs text-gray-400">
+                <div
+                  class="visible md:absolute right-5 -top-1 md:invisible transition group-hover/event:-translate-x-2 md:group-hover/event:visible">
+                  <p-button text severity="info" tooltipPosition="top" pTooltip="Clone (Edit)" size="small"
+                    [disabled]="event.category == 'TASK' && closedEventsGUID.has(event.guid)"
+                    (click)="clonEdit(event); $event.stopPropagation()" icon="pi pi-pencil" />
+
+                  <p-button text tooltipPosition="top" pTooltip="Copy" severity="secondary" size="small"
+                    [cdkCopyToClipboard]="event.title+'\n'+event.description" (click)="$event.stopPropagation()"
+                    icon="pi pi-copy" />
+
+                  @if (event.category == 'TASK' && !closedEventsGUID.has(event.guid)) {
+                  <p-button text tooltipPosition="top" pTooltip="Complete" severity="secondary" size="small"
+                    (click)="closeTask(event); $event.stopPropagation();" icon="pi pi-check-square" />
+                  }
+
+                  <p-button text tooltipPosition="top" pTooltip="Star event"
+                    (click)="toggleStarEvent(event); $event.stopPropagation()" size="small"
+                    [styleClass]="event.starred ? 'pi pi-star-fill text-yellow-300' : 'pi pi-star text-yellow-300'" />
+
+                  <p-button text tooltipPosition="top" pTooltip="Trash event"
+                    [disabled]="event.category == 'TASK' && closedEventsGUID.has(event.guid)" size="small"
+                    severity="danger" (click)="trashEvent(event); $event.stopPropagation()" icon="pi pi-trash" />
+                </div>
+                <div class="visible group-hover/event:invisible">&commat;{{ event.creator }}</div>
+                <div>{{ event.date |
+                  date:'HH:mm':timezone}}{{ caseMeta?.utc_display ? 'Z' : '' }}</div>
+              </div>
+            </div>
+
+            @if (event.description) {
+            <div
+              class="p-4 text-sm bg-white border border-gray-300 shadow-sm rounded-md text-gray-700 dark:text-gray-300 dark:bg-surface-800 whitespace-pre-wrap">
+              <div class="line-clamp-5">{{
+                event.description }}</div>
+            </div>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      } @empty {
+      <div class="flex justify-center mt-8 col-span-full">
+        <div class="py-8 px-4 mx-auto max-w-screen-xl sm:py-16 lg:px-6">
+          <div class="max-w-screen-md">
+            <div class="flex justify-center items-center">
+              <h2 class="mb-0 text-4xl tracking-tight font-extrabold text-gray-900">
+                @if (isFilterMode) { No event matching your filters }
+                @else { Nothing to see yet }
+              </h2>
+            </div>
+            <p class="mt-4 font-light text-center text-gray-500 text-sm md:text-base">
+              @if (isFilterMode) {
+            <div class="grid gap-2 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+              @if (searchInputRegex.value) {
+              <span
+                class="bg-emerald-100 text-emerald-800 text-sm font-medium px-2.5 py-0.5 rounded dark:bg-emerald-500 dark:text-emerald-100">{{
+                searchInputRegex.value }}</span>
+              }
+              @for (s of selectedSearchPattern|keyvalue; track s) {
+              <span
+                class="bg-orange-100 text-orange-800 text-sm font-medium px-2.5 py-0.5 rounded dark:bg-orange-500 dark:text-orange-100">{{
+                s.key }}</span>
+              }
+              @for (cat of filteredCategories; track cat) {
+              <span
+                class="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded dark:bg-blue-500 dark:text-blue-100">{{
+                cat }}</span>
+              }
+            </div>
+            }
+            @else { @if (!isReadonly) { Create Event to display the timeline.} }
+            </p>
+          </div>
+        </div>
+      </div>
+      }
+      } @placeholder (minimum 0.4s) {
+      @for (_ of [1,2]; track _) {
+      <div class="relative mb-16 border-s border-gray-200 dark:border-gray-700">
+        <div
+          class="sticky top-0 left-0 -translate-x-full w-20 text-right z-10 px-4 py-2 rounded-s text-sm text-gray-500 shadow-sm">
+          <p-skeleton height="2rem"></p-skeleton>
+        </div>
+        <div class="relative ms-6">
+          <span class="absolute top-1/2 -translate-y-1/2 -start-10">
+            <p-skeleton height="2rem" width="2rem" styleClass="rounded-full"></p-skeleton>
+          </span>
+          <div class="sm:flex items-center justify-between p-4">
+            <div><p-skeleton width="50rem" height="2rem" /></div>
+            <div class="mb-1"><p-skeleton width="5rem" height="2rem" /></div>
+          </div>
+        </div>
+        <div class="relative ms-6">
+          <span class="absolute top-1/2 -translate-y-1/2 -start-10">
+            <p-skeleton height="2rem" width="2rem" styleClass="rounded-full"></p-skeleton>
+          </span>
+          <div class="sm:flex items-center justify-between p-4">
+            <div><p-skeleton width="50rem" height="2rem" /></div>
+            <div class="mb-1"><p-skeleton width="5rem" height="2rem" /></div>
+          </div>
+        </div>
+      </div>
+      }
+      }
+    </div>
+  </div>
+</div>
+
+<p-menu [model]="categoryMenuItems" class="flex justify-center" styleClass="w-full md:w-60" appendTo="body"
+  [popup]="true" #categoryMenu>
+  <ng-template #item let-item>
+    <a pRipple class="flex items-center p-menu-item-link">
+      <img [src]="item.icon" class="w-7">
+      <span class="font-light">{{ item.label }}</span>
+    </a>
+  </ng-template>
+</p-menu>
+
+<p-dialog [(visible)]="isTrashOpened" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  styleClass="max-w-3xl w-full">
+  <ng-template #header>
+    <div class="relative">
+      <div class="tracking-tight text-2xl">Trash</div>
+      <div class="absolute -bottom-1 left-2 w-8 h-1 bg-gray-200"></div>
+    </div>
+  </ng-template>
+  <section class="max-h-96">
+    <div class="py-2 grid gap-4">
+      @for (event of trashEvents$|async; track $index) {
+      <div class="flex gap-2 min-w-0" [class.text-gray-500]="event.gray">
+        <div class="flex items-center justify-center">
+          <div class="shrink-0 size-12">
+            <img [class.grayscale]="event.gray" class="size-12" [src]="getCategoryIcon(event.category)">
+          </div>
+        </div>
+
+        <div class="flex items-center min-w-0 grow">
+          <div class="flex items-start flex-col min-w-0 w-full">
+            <div class="max-w-full shrink truncate">{{ event.title }}</div>
+            <div class="font-light text-sm text-gray-700" [class.text-gray-500]="event.gray">
+              <span class="text-blue-500" [class.text-gray-500]="event.gray">{{ event.date | date: ('dd MMM
+                YYYY')}}</span>, created by <span class="text-blue-500" [class.text-gray-500]="event.gray">{{
+                event.creator }}</span>
+            </div>
+
+            <div class="flex gap-1 mt-1">
+              @if (event.creator == username) {
+              <span
+                class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-500 dark:text-blue-100">mine</span>
+              }
+              @if (event.description) {
+              <span
+                class="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-gray-500 dark:text-gray-100">has
+                description</span>
+              }
+              @if (event.closes) {
+              <span
+                class="bg-purple-100 text-purple-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-purple-500 dark:text-purple-100">closes
+                a task</span>
+              }
+              @if (event.starred) {
+              <span
+                class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-yellow-500 dark:text-yellow-100">starred</span>
+              }
+            </div>
+          </div>
+
+          @if (!caseMeta?.closed || event.gray) {
+          <div class="flex justify-end items-center">
+            <p-button text icon="pi pi-undo" pTooltip="Restore" [disabled]="event.gray" (click)="restoreEvent(event)" />
+          </div>
+          }
+        </div>
+      </div>
+      } @empty {
+      <div class="mt-4 flex flex-col items-center justify-center">
+        <h3 class="tracking-tight text-gray-400">Trash is empty</h3>
+      </div>
+      }
+    </div>
+  </section>
+</p-dialog>
+
+<p-dialog [(visible)]="isSettingsOpened" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  styleClass="max-w-3xl w-full">
+  <ng-template #header>
+    <div class="relative">
+      <div class="tracking-tight text-2xl">Settings</div>
+      <div class="absolute -bottom-1 left-2 w-8 h-1 bg-gray-200"></div>
+    </div>
+  </ng-template>
+  <section class="p-4">
+    @if (this.caseMeta?.managed) {
+    <div class="mx-4 bg-red-100 border-l-3 border-red-500 text-red-700 flex justify-between items-center p-4">
+      <div class="flex flex-col">
+        <p class="font-bold">Managed Case</p>
+        <p>Case is currently managed by Iron.</p>
+      </div>
+      @if (!this.caseMeta?.closed) { <p-button [disabled]="this.caseForm.enabled" text (click)="enableCaseForm()"
+        label="Unlock" icon="pi pi-lock-open" /> }
+    </div>
+    }
+
+    <div pFocusTrap class="grid grid-cols-2 gap-4" [formGroup]="caseForm">
+      <p-floatlabel variant="in" class="w-full">
+        <input id="name" formControlName="name" pInputText class="w-full" />
+        <label for="name">Name</label>
+      </p-floatlabel>
+
+      <p-floatlabel variant="in" class="w-full">
+        <input id="tsid" formControlName="tsid" pInputText class="w-full" />
+        <label for="tsid">TSID</label>
+      </p-floatlabel>
+
+      <p-multiselect [options]="acsGroups" [group]="true" [showToggleAll]="false" formControlName="acs"
+        class="flex items-center col-span-full" appendTo="body" scrollHeight="250px" display="chip" id="acs" optionLabel="label"
+        placeholder="Access Control System" optionValue="value" fluid />
+
+      <p-floatlabel variant="in" class="col-span-full w-full">
+        <textarea id="description" formControlName="description" pTextarea class="w-full"></textarea>
+        <label for="description">Description</label>
+      </p-floatlabel>
+    </div>
+
+    <div class="text-right">
+      <p-button text label="Save" (click)="updateCase(caseForm.value)"
+        [disabled]="caseForm.pristine || !caseForm.valid || caseMeta?.closed" />
+    </div>
+
+    <div class="mt-4">
+      <div class="flex items-center justify-between grow">
+        <div class="flex flex-col cursor-pointer" (click)="toggleUTCDisplay()">
+          <div class="font-medium">Use UTC</div>
+          <div class="text-sm font-light text-gray-500">
+            Display dates as UTC for everyone.
+          </div>
+        </div>
+        <p-toggleswitch [(ngModel)]="isUsingUTC" [disabled]="!!caseMeta?.closed" (onChange)="toggleUTCDisplay()" />
+      </div>
+    </div>
+
+    <div class="mt-4 flex justify-center">
+      @if (caseMeta?.closed) {
+      <p-button text label="Open Case" icon="pi pi-lock-open" (click)="reopenCase()" />
+      } @else {
+      <p-button text severity="danger" label="Close Case" icon="pi pi-lock" (click)="closeCase()" />
+      }
+    </div>
+  </section>
+</p-dialog>
+
+<p-dialog [(visible)]="isExportsOpened" [modal]="true" [draggable]="false" [dismissableMask]="true"
+  styleClass="max-w-3xl w-full">
+  <ng-template #header>
+    <div class="relative">
+      <div class="tracking-tight text-2xl">Export</div>
+      <div class="absolute -bottom-1 left-2 w-8 h-1 bg-gray-200"></div>
+    </div>
+  </ng-template>
+
+  <section class="p-4">
+    <div class="pt-4 w100">
+      <div class="mt-4">
+        <h1 class="font-semibold tracking-tight text-xl">Events</h1>
+      </div>
+
+      <div class="flex justify-center">
+        <p-selectbutton [options]="exportOptionsEvent" [(ngModel)]="exportOptionEventValue" optionLabel="name"
+          optionValue="value" />
+      </div>
+
+      <div class="mt-4">
+        <h1 class="font-semibold tracking-tight text-xl">Format</h1>
+      </div>
+
+      <div class="flex justify-center">
+        <p-selectbutton [options]="exportOptionsFormat" [(ngModel)]="exportOptionFormatValue" optionLabel="name"
+          optionValue="value" />
+      </div>
+
+      <div class="mt-4">
+        @if (exportOptionFormatValue == 'md') {
+        <h1 class="font-semibold tracking-tight text-xl">Options</h1>
+        <span class="text-xs text-gray-500">Customize the output options.</span>
+
+        <div>
+          <p-multiselect [options]="mdOptionFields" [showToggleAll]="false" [formControl]="mdOptionFieldsInput"
+            appendTo="body" scrollHeight="250px" display="chip" id="mdOptionsFields" optionLabel="label"
+            optionValue="value" fluid />
+        </div>
+        }
+      </div>
+
+      <div class="flex justify-center mt-4">
+        <p-button text label="Generate" [disabled]="exportOptionFormatValue == 'md' && !mdOptionFieldsInput.value"
+          (click)="generateExport()" />
+      </div>
+    </div>
+  </section>
+</p-dialog>

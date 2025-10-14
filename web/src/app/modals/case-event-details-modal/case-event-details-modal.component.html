@@ -1,0 +1,112 @@
+<section class="w-full">
+  <div class="flex gap-2">
+    @if (event?.starred) {<span
+      class="flex items-center gap-1 bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-yellow-500 dark:text-yellow-100"><i
+        class="pi pi-star-fill text-xs"></i> Starred</span>}
+    @if (event?.trashed) {<span
+      class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-500 dark:text-red-100">Trashed</span>}
+  </div>
+
+  <div class="grid md:grid-cols-6 mt-4 gap-4">
+    <div class="col-span-full md:col-span-5">
+      <div class="event-box">
+        <div class="text-blue-800">Event</div>
+        <span class="event-box-text cursor-pointer" [cdkCopyToClipboard]="event?.title || ''">{{ event?.title }}</span>
+      </div>
+    </div>
+
+    <div class="col-span-full md:col-span-1">
+      <div class="event-box">
+        <div class="text-blue-800">Category</div>
+        <span class="event-box-text truncate">{{ event?.category }}</span>
+      </div>
+    </div>
+
+    <div class="col-span-full md:col-span-2">
+      <div class="event-box">
+        <div class="text-blue-800">GUID</div>
+        <span [pTooltip]="event?.guid || ''" class="event-box-text truncate cursor-pointer"
+          [cdkCopyToClipboard]="event?.guid || ''">{{ event?.guid }}</span>
+      </div>
+    </div>
+
+    <div class="col-span-full md:col-span-2">
+      <div class="event-box">
+        <div class="text-blue-800">Created By</div>
+        <span class="event-box-text">{{ event?.creator }}</span>
+      </div>
+    </div>
+
+    <div class="col-span-full md:col-span-2">
+      <div class="event-box">
+        <div class="text-blue-800">Date @if (tz == 'UTC') {(UTC)}</div>
+        <span class="event-box-text">{{ event?.date | date: 'YYYY-MM-dd, HH:mm':tz }}</span>
+      </div>
+    </div>
+
+    @if (event?.category == 'TASK') {
+    <div class="col-span-full md:col-span-3">
+      <div class="event-box">
+        <div class="text-blue-800">Assignees</div>
+        @if (event?.assignees?.length) {
+        <div class="event-box-text">
+          <p-avatar-group>
+            @for (assignee of event?.assignees; track assignee) {
+            <p-avatar [label]="assignee[0]" shape="circle" />
+            }
+          </p-avatar-group>
+        </div>
+        } @else {
+        <span class="event-box-text">No assignee</span>
+        }
+      </div>
+    </div>
+
+    <div class="col-span-full md:col-span-3">
+      <div class="event-box">
+        <div class="text-blue-800">Due date</div>
+        @if (event?.duedate) {
+        <span class="event-box-text">{{ event?.duedate | date: 'YYYY-MM-dd, HH:mm':tz}}</span>
+        } @else {
+        <span class="event-box-text">-</span>
+        }
+      </div>
+    </div>
+    }
+
+    <div class="col-span-full md:col-span-3">
+      <div class="event-box">
+        <div class="text-blue-800">Closes</div>
+        <span class="event-box-text line-clamp-1">{{ event?.closes || '-' }}</span>
+      </div>
+    </div>
+
+    <div class="col-span-full md:col-span-3">
+      <div class="event-box">
+        <div class="text-blue-800">Closed by</div>
+        <span class="event-box-text line-clamp-1"><span class="text-sm text-gray-400">{{ event?.closedBy?.date| date:
+            'dd MMM' }}</span> {{
+          event?.closedBy?.title || '-' }}</span>
+      </div>
+    </div>
+
+    <div class="col-span-full">
+      <div class="event-box">
+        <div class="flex justify-between items-center text-blue-800">
+          <span>Description</span>
+          @if (event?.description?.length) {<p-button text icon="pi pi-copy"
+            [cdkCopyToClipboard]="event?.description || ''" />}
+        </div>
+        <span class="event-box-text md">
+          @if (event?.description) {
+          <markdown>
+            {{ event?.description }}
+          </markdown>
+          } @else {
+          -
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+</section>

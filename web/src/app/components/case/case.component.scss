@@ -1,0 +1,109 @@
+.splash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 900; //HACK: Front of toast
+  overflow: hidden;
+
+  &-dialog {
+    height: 90%;
+    max-height: 500px;
+    width: 80%;
+    max-width: 1600px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: flex-end;
+
+    &-content {
+      position: relative;
+      background-color: #fff;
+      padding: 3.8vw 3.2vw;
+      border-radius: 8px 8px 0 0;
+      width: 100%;
+
+      &-cross {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        color: #7f7f7f;
+      }
+    }
+  }
+}
+
+.filter-panel {
+  position: fixed;
+  top: 90px;
+  right: 0px;
+  animation: backslideY 0.3s both;
+  z-index: 200;
+  width: 450px;
+  max-width: 40%;
+  overflow-y: auto;
+
+  height: 325px;
+  max-height: 325px;
+
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  box-shadow: 0 4px 4px 0 #f4f6f8;
+  border-radius: 6px;
+  font-size: 0.85rem;
+
+  padding: 16px;
+
+  .event-box {
+    width: calc(100% - 16px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #3d3d3d;
+    box-shadow: 0 4px 4px 0 #f4f6f8;
+    border-radius: 6px;
+    padding: 16px;
+  }
+}
+
+.filter-opened {
+  top: calc(325px + 90px + 45px) !important;
+}
+
+.caseEventFadeIn {
+  animation: scaleDown 0.3s;
+}
+
+@keyframes scaleDown {
+  from {
+    color: #888;
+    transform: scale(1.1, 1.1);
+  }
+
+  to {
+    color: #3d3d3d;
+    transform: scale(1, 1);
+  }
+}
+
+.spin:hover {
+  -webkit-animation: rotate 2s infinite linear;
+  animation: rotate 2s infinite linear;
+}
+
+@keyframes rotate {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}

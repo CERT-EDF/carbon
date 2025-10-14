@@ -1,0 +1,80 @@
+<section>
+  <div pFocusTrap class="grid md:grid-cols-3 gap-4 p-4" [formGroup]="eventForm">
+    <p-floatlabel variant="in" class="col-span-full w-full">
+      <input id="title" formControlName="title" pInputText fluid />
+      <label for="title">Text</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="in" class="w-full">
+      <p-select [options]="categories" id="category" formControlName="category" fluid class="capitalize"
+        optionLabel="name" optionValue="name">
+        <ng-template let-category #selectedItem>
+          <div class="flex items-center gap-2">
+            <img [src]="category.icon" class="w-6" />
+            <div>{{ category.name }}</div>
+          </div>
+        </ng-template>
+
+        <ng-template let-category #item>
+          <div class="flex items-center gap-2">
+            <img [src]="category.icon" class="w-6" />
+            <div>{{ category.name }}</div>
+          </div>
+        </ng-template>
+      </p-select>
+      <label for="category">Category</label>
+    </p-floatlabel>
+
+    @if (eventForm.get('category')?.value == 'TASK') {
+    <p-multiselect [showToggleAll]="false" [options]="(users$|async) || []" placeholder="Assignees" appendTo="body" scrollHeight="250px"
+      display="chip" id="acs" optionLabel="username" optionValue="username" id="assignees" formControlName="assignees" selectedItemsLabel="{0} users selected"
+      fluid class="capitalize flex items-center" />
+
+    <p-floatlabel variant="in" class="w-full">
+      <p-datepicker id="dueDate" [iconDisplay]="'input'" appendTo="body" [minDate]="today" formControlName="dueDate"
+        [showIcon]="true" fluid />
+      <label for="dueDate">Due date</label>
+    </p-floatlabel>
+    }
+
+    <p-floatlabel variant="in" class="w-full">
+      <p-datepicker id="date" [iconDisplay]="'input'" appendTo="body" formControlName="date" [showIcon]="true" fluid />
+      <label for="date">Date</label>
+    </p-floatlabel>
+
+    @if (eventForm.get('date')?.value) {
+    <p-floatlabel variant="in" class="w-full">
+      <p-datepicker id="dateHour" [iconDisplay]="'input'" [timeOnly]="true" appendTo="body" formControlName="dateHour"
+        [showIcon]="true" fluid />
+      <label for="dateHour">Time</label>
+    </p-floatlabel>
+    }
+
+    <p-floatlabel variant="in" class="w-full">
+      <p-select [options]="pending" id="closes" [showClear]="true" optionLabel="title" optionValue="guid"
+        formControlName="closes" fluid>
+        <ng-template let-p #item>
+          <div class="flex flex-col">
+            <span class="text-xs text-gray-400">{{ p.date | date: 'dd MMM | HH:mm'}}</span>
+            <span class="text-[#12356D] text-sm line-clamp-1">{{ p.title }}</span>
+          </div>
+        </ng-template>
+        <ng-template #dropdownicon>
+          <i class="pi pi-users"></i>
+        </ng-template>
+      </p-select>
+      <label for="closes">Closes</label>
+    </p-floatlabel>
+
+    <p-floatlabel variant="in" class="col-span-full w-full">
+      <textarea id="description" rows="4" formControlName="description"
+        placeholder="Markdown is **supported** when displayed" pTextarea fluid></textarea>
+      <label for="description">Description</label>
+    </p-floatlabel>
+  </div>
+
+  <div class="mt-4 text-right">
+    <p-button (click)="closeDialog(true)" severity="danger" label="Cancel" text />
+    <p-button (click)="closeDialog()" [disabled]="!eventForm.valid" [label]="cloneEvent ? 'Update' : 'Create'" text />
+  </div>
+</section>
