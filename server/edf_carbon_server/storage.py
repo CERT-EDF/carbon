@@ -59,7 +59,7 @@ ON event_{_MODEL_VERSION} (case_guid, closes)
 '''
 _ATTACH_CASE = f'''
 UPDATE case_{_MODEL_VERSION}
-SET guid = :next_guid
+SET guid = :next_guid, managed = 1
 WHERE guid = :guid
 '''
 _ATTACH_TL_EVENT = f'''
