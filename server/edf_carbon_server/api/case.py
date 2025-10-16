@@ -400,7 +400,9 @@ async def api_case_trash_tl_event_put(request: Request):
     if not tl_event:
         return json_response(status=404, message="Timeline event not found")
     if tl_event.trashed:
-        return json_response(status=400, message="Timeline event already trashed")
+        return json_response(
+            status=400, message="Timeline event already trashed"
+        )
     if tl_event.category == TASK_CATEGORY.name and not await _is_pending(
         storage, case_guid, str(tl_event.guid)
     ):
@@ -408,7 +410,9 @@ async def api_case_trash_tl_event_put(request: Request):
             status=400, message="Cannot trash a completed timeline event"
         )
     if tl_event.closes:
-        closed_event = await storage.retrieve_tl_event(case_guid, tl_event.closes)
+        closed_event = await storage.retrieve_tl_event(
+            case_guid, tl_event.closes
+        )
         if not closed_event:
             return json_response(
                 status=404,
@@ -444,7 +448,9 @@ async def api_case_trash_get(request: Request):
     return json_response(
         data=[
             tl_event.to_dict()
-            async for tl_event in storage.enumerate_trashed_tl_events(case_guid)
+            async for tl_event in storage.enumerate_trashed_tl_events(
+                case_guid
+            )
         ]
     )
 
