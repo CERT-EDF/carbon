@@ -55,7 +55,7 @@ class CarbonServerConfig(Loadable):
         webapp[_CARBON_CONFIG] = self
 
 
-def get_neon_config(app_or_req: Application | Request) -> CarbonServerConfig:
+def get_carbon_config(app_or_req: Application | Request) -> CarbonServerConfig:
     """Retrieve config from webapp context"""
     if isinstance(app_or_req, Request):
         app_or_req = app_or_req.app
