@@ -44,7 +44,7 @@ server {
     server_name carbon.domain.lan;
 
     access_log  /var/log/nginx/carbon.access.log;
-    error_log  /var/log/nginx/carbon.error.log
+    error_log  /var/log/nginx/carbon.error.log;
 
     proxy_http_version 1.1;
     proxy_set_header X-Real-IP $remote_addr;
@@ -52,7 +52,7 @@ server {
     proxy_set_header X-Forwarded-Proto $scheme;
 
     location /api {
-      proxy_pass http://127.0.0.1:8011;
+      proxy_pass http://127.0.0.1:8111;
       client_max_body_size 4G;
       proxy_buffering off;
       proxy_set_header Upgrade $http_upgrade;
@@ -61,7 +61,7 @@ server {
     }
 
     location / {
-      proxy_pass http://127.0.0.1:8021;
+      proxy_pass http://127.0.0.1:8121;
     }
   }
 ```
