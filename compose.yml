@@ -1,4 +1,15 @@
+# Do not use this compose file for production deployments
 services:
+
+  carbon-redis:
+    image: redis:alpine
+    command: redis-server --save 300 1 --loglevel warning
+    networks:
+      - private
+    volumes:
+      - /data/carbon/redis:/data
+    environment:
+      SKIP_DROP_PRIVS: 1
 
   carbon-frontend:
     build:
@@ -12,22 +23,27 @@ services:
       - 127.0.0.1:8121:80
 
   carbon-backend:
-    build: 
+    build:
       context: ./server/docker
       no_cache: true
     image: cert-edf/carbon-be
     pull_policy: build
     ports:
       - 127.0.0.1:8111:8080
+    networks:
+      - default
+      - private
     volumes:
       - /data/carbon/conf:/conf
       - /data/carbon/data:/data
+    depends_on:
+      - carbon-redis
     environment:
       ROLE: server
       FUSION_DEBUG: 0
 
   carbon-synchronizer:
-    build: 
+    build:
       context: ./server/docker
       no_cache: true
     image: cert-edf/carbon-be
@@ -38,3 +54,6 @@ services:
     environment:
       ROLE: synchronizer
       FUSION_DEBUG: 0
+
+networks:
+  private:

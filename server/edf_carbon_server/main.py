@@ -8,6 +8,7 @@ from edf_carbon_core.concept import Case, Constant, Event
 from edf_fusion.concept import Identity, Info
 from edf_fusion.helper.config import ConfigError
 from edf_fusion.helper.logging import get_logger
+from edf_fusion.helper.redis import setup_redis
 from edf_fusion.server.auth import FusionAuthAPI, get_fusion_auth_api
 from edf_fusion.server.case import FusionCaseAPI
 from edf_fusion.server.constant import FusionConstantAPI
@@ -69,9 +70,9 @@ def _parse_args() -> Namespace:
 async def _init_app(config: CarbonServerConfig) -> Application | None:
     webapp = Application(client_max_size=config.server.client_max_size)
     config.setup(webapp)
+    redis = setup_redis(webapp, config.server.redis_url)
     fusion_auth_api = FusionAuthAPI(
-        config=config.auth_api,
-        authorize_impl=_authorize_impl,
+        redis=redis, config=config.auth_api, authorize_impl=_authorize_impl
     )
     fusion_auth_api.setup(webapp)
     info = Info(api='carbon', version=version)
@@ -91,7 +92,9 @@ async def _init_app(config: CarbonServerConfig) -> Application | None:
         enumerate_cases_impl=enumerate_cases_impl,
     )
     fusion_case_api.setup(webapp)
-    fusion_event_api = FusionEventAPI(config=config.event_api, event_cls=Event)
+    fusion_event_api = FusionEventAPI(
+        redis=redis, config=config.event_api, event_cls=Event
+    )
     fusion_event_api.setup(webapp)
     setup_api(webapp)
     setup_pubsub(webapp)
