@@ -98,8 +98,23 @@ REPLACE INTO event_{_MODEL_VERSION} VALUES (
     :description
 )
 '''
+_DELETE_CASE = f'''
+DELETE FROM case_{_MODEL_VERSION}
+WHERE guid = :guid
+'''
+_DELETE_TL_EVENT_ONE = f'''
+DELETE FROM event_{_MODEL_VERSION}
+WHERE guid = :guid AND case_guid = :case_guid
+'''
+_DELETE_TL_EVENT_ALL = f'''
+DELETE FROM event_{_MODEL_VERSION}
+WHERE case_guid = :case_guid
+'''
 _SELECT_CASE_ALL = f'SELECT * FROM case_{_MODEL_VERSION}'
-_SELECT_CASE_ONE = f'SELECT * FROM case_{_MODEL_VERSION} WHERE guid = :guid'
+_SELECT_CASE_ONE = f'''
+SELECT * FROM case_{_MODEL_VERSION}
+WHERE guid = :guid
+'''
 _SELECT_CASES_STATS = f'''
 SELECT e.case_guid AS guid,
     SUM(CASE WHEN e.trashed THEN 0 ELSE 1 END) AS total,
@@ -116,7 +131,7 @@ SELECT e.case_guid AS guid,
 FROM event_{_MODEL_VERSION} AS e
 GROUP BY e.case_guid
 '''
-_SELECT_TL_EVENTS_CLOSED = f'''
+_SELECT_TL_EVENT_CLOSED = f'''
 SELECT closes FROM event_{_MODEL_VERSION}
 WHERE case_guid = :case_guid AND closes IS NOT NULL
 '''
@@ -304,6 +319,21 @@ class Storage(FusionStorage):
             return None
         return case
 
+    async def delete_case(self, case_guid: UUID) -> bool:
+        parameters = {'case_guid': str(case_guid)}
+        try:
+            await self._execute(_DELETE_TL_EVENT_ALL, parameters)
+        except Error:
+            _LOGGER.exception("failed to delete case events")
+            return False
+        parameters = {'guid': str(case_guid)}
+        try:
+            await self._execute(_DELETE_CASE, parameters)
+        except Error:
+            _LOGGER.exception("failed to delete case")
+            return False
+        return True
+
     async def retrieve_case(self, case_guid: UUID) -> Case | None:
         parameters = {'guid': str(case_guid)}
         try:
@@ -378,6 +408,18 @@ class Storage(FusionStorage):
             return None
         return tl_event
 
+    async def delete_tl_event(
+        self, case_guid: UUID, tl_event_guid: UUID
+    ) -> bool:
+        """Delete timeline event"""
+        parameters = {'guid': str(tl_event_guid), 'case_guid': str(case_guid)}
+        try:
+            await self._execute(_DELETE_TL_EVENT_ONE, parameters)
+        except Error:
+            _LOGGER.exception("failed to delete timeline event")
+            return False
+        return True
+
     async def retrieve_tl_event(
         self, case_guid: UUID, tl_event_guid: UUID
     ) -> TimelineEvent | None:
@@ -401,7 +443,7 @@ class Storage(FusionStorage):
         parameters = {'case_guid': str(case_guid)}
         try:
             async for row in self._fetchmany(
-                _SELECT_TL_EVENTS_CLOSED, parameters
+                _SELECT_TL_EVENT_CLOSED, parameters
             ):
                 yield row['closes']
         except Error:

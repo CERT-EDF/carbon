@@ -15,6 +15,7 @@ from edf_fusion.helper.streaming import stream_from_text
 from edf_fusion.server.case import (
     AttachContext,
     CreateContext,
+    DeleteContext,
     EnumerateContext,
     RetrieveContext,
     UpdateContext,
@@ -91,6 +92,12 @@ async def update_case_impl(ctx: UpdateContext) -> Case | None:
         ),
     )
     return case
+
+
+async def delete_case_impl(ctx: DeleteContext) -> bool:
+    """Delete case"""
+    storage = get_fusion_storage(ctx.request)
+    return await storage.delete_case(ctx.case_guid)
 
 
 async def retrieve_case_impl(ctx: RetrieveContext) -> Case | None:
@@ -210,6 +217,30 @@ async def api_case_tl_event_put(request: Request):
         ),
     )
     return json_response(data=data)
+
+
+async def api_case_tl_event_delete(request: Request):
+    """Delete case timeline event (cannot be restored)"""
+    case_guid = get_guid(request, 'case_guid')
+    if not case_guid:
+        return json_response(status=400, message="Invalid case GUID")
+    tl_event_guid = get_guid(request, 'tl_event_guid')
+    if not tl_event_guid:
+        return json_response(status=400, message="Invalid timeline event GUID")
+    _, storage = await prologue(
+        request,
+        'delete_event',
+        context={
+            'case_guid': case_guid,
+            'tl_event_guid': tl_event_guid,
+            'case_open_check': True,
+            'is_delete_op': True,
+        },
+    )
+    deleted = await storage.delete_tl_event(case_guid, tl_event_guid)
+    if not deleted:
+        return json_response(status=400, message='Not deleted')
+    return json_response()
 
 
 async def api_case_tl_events_get(request: Request):

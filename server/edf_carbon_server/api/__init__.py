@@ -1,6 +1,6 @@
 """Carbon API module"""
 
-from aiohttp.web import Application, get, post, put
+from aiohttp.web import Application, delete, get, post, put
 from edf_fusion.helper.logging import get_logger
 
 from .case import (
@@ -8,6 +8,7 @@ from .case import (
     api_case_restore_tl_event_put,
     api_case_star_tl_event_put,
     api_case_subscribe_get,
+    api_case_tl_event_delete,
     api_case_tl_event_get,
     api_case_tl_event_post,
     api_case_tl_event_put,
@@ -19,6 +20,7 @@ from .case import (
     api_cases_stats_get,
     attach_case_impl,
     create_case_impl,
+    delete_case_impl,
     enumerate_cases_impl,
     retrieve_case_impl,
     update_case_impl,
@@ -49,6 +51,10 @@ def setup_api(webapp: Application):
             put(
                 '/api/case/{case_guid}/event/{tl_event_guid}',
                 api_case_tl_event_put,
+            ),
+            delete(
+                '/api/case/{case_guid}/event/{tl_event_guid}',
+                api_case_tl_event_delete,
             ),
             put(
                 '/api/case/{case_guid}/event/{tl_event_guid}/restore',
