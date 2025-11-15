@@ -48,6 +48,13 @@ class CarbonClient:
             endpoint, tl_event, concept_cls=TimelineEvent
         )
 
+    async def delete_case_tl_event(
+        self, case_guid: UUID, tl_event: TimelineEvent
+    ) -> bool:
+        """Delete case timeline event"""
+        endpoint = f'/api/case/{case_guid}/event/{tl_event.guid}'
+        return await self.fusion_client.delete(endpoint)
+
     async def trash_case_tl_event(
         self, case_guid: UUID, tl_event_guid: UUID
     ) -> TimelineEvent | None:
