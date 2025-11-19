@@ -104,7 +104,7 @@ WHERE guid = :guid
 '''
 _DELETE_TL_EVENT_ONE = f'''
 DELETE FROM event_{_MODEL_VERSION}
-WHERE guid = :guid AND case_guid = :case_guid
+WHERE guid = :guid AND case_guid = :case_guid AND trashed = 1
 '''
 _DELETE_TL_EVENT_ALL = f'''
 DELETE FROM event_{_MODEL_VERSION}
@@ -224,10 +224,15 @@ class Storage(FusionStorage):
     config: FusionStorageConfig
     _connection: Connection | None = None
 
-    async def _execute(self, statement: str, parameters: dict | None = None):
+    async def _execute(
+        self, statement: str, parameters: dict | None = None
+    ) -> int:
+        row_count = -1
         parameters = parameters or {}
         async with self._connection.execute(statement, parameters) as cursor:
+            row_count = cursor.rowcount
             await cursor.close()
+        return row_count
 
     async def _fetchone(
         self, statement: str, parameters: dict | None = None
@@ -414,11 +419,11 @@ class Storage(FusionStorage):
         """Delete timeline event"""
         parameters = {'guid': str(tl_event_guid), 'case_guid': str(case_guid)}
         try:
-            await self._execute(_DELETE_TL_EVENT_ONE, parameters)
+            row_count = await self._execute(_DELETE_TL_EVENT_ONE, parameters)
         except Error:
             _LOGGER.exception("failed to delete timeline event")
             return False
-        return True
+        return bool(row_count)
 
     async def retrieve_tl_event(
         self, case_guid: UUID, tl_event_guid: UUID
