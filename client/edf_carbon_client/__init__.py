@@ -14,6 +14,9 @@ from edf_carbon_core.concept import (
 )
 from edf_fusion.client import FusionClient
 from edf_fusion.concept import Identity, PendingDownloadKey
+from edf_fusion.helper.logging import get_logger
+
+_LOGGER = get_logger('client', root='carbon')
 
 
 @dataclass(kw_only=True)
@@ -24,6 +27,7 @@ class CarbonClient:
 
     async def subscribe(self, case_guid: UUID) -> AsyncIterator[Notification]:
         """Subscribe"""
+        _LOGGER.info("subscribing to case %s", case_guid)
         endpoint = f'/api/case/{case_guid}/subscribe'
         async for notif in self.fusion_client.sse(
             endpoint, concept_cls=Notification
@@ -34,6 +38,7 @@ class CarbonClient:
         self, case_guid: UUID, tl_event: TimelineEvent
     ) -> TimelineEvent | None:
         """Create case timeline event"""
+        _LOGGER.info("creating event in case %s", case_guid)
         endpoint = f'/api/case/{case_guid}/event'
         return await self.fusion_client.post(
             endpoint, tl_event, concept_cls=TimelineEvent
@@ -43,22 +48,25 @@ class CarbonClient:
         self, case_guid: UUID, tl_event: TimelineEvent
     ) -> TimelineEvent | None:
         """Update case timeline event"""
+        _LOGGER.info("updating event %s in case %s", tl_event.guid, case_guid)
         endpoint = f'/api/case/{case_guid}/event/{tl_event.guid}'
         return await self.fusion_client.put(
             endpoint, tl_event, concept_cls=TimelineEvent
         )
 
     async def delete_case_tl_event(
-        self, case_guid: UUID, tl_event: TimelineEvent
+        self, case_guid: UUID, tl_event_guid: UUID
     ) -> bool:
         """Delete case timeline event"""
-        endpoint = f'/api/case/{case_guid}/event/{tl_event.guid}'
+        _LOGGER.info("deleting event %s in case %s", tl_event_guid, case_guid)
+        endpoint = f'/api/case/{case_guid}/event/{tl_event_guid}'
         return await self.fusion_client.delete(endpoint)
 
     async def trash_case_tl_event(
         self, case_guid: UUID, tl_event_guid: UUID
     ) -> TimelineEvent | None:
         """Trash case timeline event"""
+        _LOGGER.info("trashing event %s in case %s", tl_event_guid, case_guid)
         endpoint = f'/api/case/{case_guid}/event/{tl_event_guid}/trash'
         return await self.fusion_client.put(
             endpoint, concept_cls=TimelineEvent
@@ -68,6 +76,7 @@ class CarbonClient:
         self, case_guid: UUID, tl_event_guid: UUID
     ) -> TimelineEvent | None:
         """Trash case timeline event"""
+        _LOGGER.info("star-ing event %s in case %s", tl_event_guid, case_guid)
         endpoint = f'/api/case/{case_guid}/event/{tl_event_guid}/star'
         return await self.fusion_client.put(
             endpoint, concept_cls=TimelineEvent
@@ -77,6 +86,7 @@ class CarbonClient:
         self, case_guid: UUID, tl_event_guid: UUID
     ) -> TimelineEvent | None:
         """Restore case timeline event"""
+        _LOGGER.info("restoring event %s in case %s", tl_event_guid, case_guid)
         endpoint = f'/api/case/{case_guid}/event/{tl_event_guid}/restore'
         return await self.fusion_client.put(
             endpoint, concept_cls=TimelineEvent
@@ -120,6 +130,7 @@ class CarbonClient:
         starred: bool = False,
     ) -> Path | None:
         """Export case timeline event"""
+        _LOGGER.info("exporting events in case %s", case_guid)
         endpoint = f'/api/case/{case_guid}/events/export'
         fields = fields or []
         params = [('fields', field) for field in fields]
