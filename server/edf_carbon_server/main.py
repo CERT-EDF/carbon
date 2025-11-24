@@ -27,7 +27,6 @@ from .api import (
     update_case_impl,
 )
 from .config import CarbonServerConfig
-from .pubsub import setup_pubsub
 from .storage import Storage
 
 _LOGGER = get_logger('server.main', root='carbon')
@@ -99,7 +98,6 @@ async def _init_app(config: CarbonServerConfig) -> Application | None:
     )
     fusion_event_api.setup(webapp)
     setup_api(webapp)
-    setup_pubsub(webapp)
     storage = Storage(config=config.storage)
     storage.setup(webapp)
     return webapp

@@ -2,7 +2,7 @@
 """Carbon Test Client"""
 
 from argparse import ArgumentParser
-from asyncio import gather, run
+from asyncio import run
 from uuid import UUID
 
 from edf_carbon_core.concept import Case
@@ -17,21 +17,7 @@ from edf_fusion.client import (
 from edf_fusion.helper.logging import get_logger
 from yarl import URL
 
-from edf_carbon_client import CarbonClient
-
 _LOGGER = get_logger('subscribe', root='test')
-
-
-async def _fusion_subscriber(fusion_client: FusionClient, case: Case):
-    fusion_event_api_client = FusionEventAPIClient(fusion_client=fusion_client)
-    async for event in fusion_event_api_client.subscribe(case.guid):
-        _LOGGER.info("%s", event)
-
-
-async def _carbon_subscriber(fusion_client: FusionClient, case: Case):
-    carbon_client = CarbonClient(fusion_client=fusion_client)
-    async for notification in carbon_client.subscribe(case.guid):
-        _LOGGER.info("%s", notification)
 
 
 async def _playbook(fusion_client: FusionClient, case_guid: UUID):
@@ -39,10 +25,9 @@ async def _playbook(fusion_client: FusionClient, case_guid: UUID):
         case_cls=Case, fusion_client=fusion_client
     )
     case = await fusion_case_api_client.retrieve_case(case_guid)
-    await gather(
-        _fusion_subscriber(fusion_client, case),
-        _carbon_subscriber(fusion_client, case),
-    )
+    fusion_event_api_client = FusionEventAPIClient(fusion_client=fusion_client)
+    async for event in fusion_event_api_client.subscribe(case.guid):
+        _LOGGER.info("%s", event)
 
 
 def _parse_args():
