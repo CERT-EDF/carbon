@@ -9,7 +9,6 @@ from aiohttp import FormData
 from edf_carbon_core.concept import (
     CaseStats,
     Category,
-    Notification,
     TimelineEvent,
 )
 from edf_fusion.client import FusionClient
@@ -24,15 +23,6 @@ class CarbonClient:
     """Carbon Client"""
 
     fusion_client: FusionClient
-
-    async def subscribe(self, case_guid: UUID) -> AsyncIterator[Notification]:
-        """Subscribe"""
-        _LOGGER.info("subscribing to case %s", case_guid)
-        endpoint = f'/api/case/{case_guid}/subscribe'
-        async for notif in self.fusion_client.sse(
-            endpoint, concept_cls=Notification
-        ):
-            yield notif
 
     async def create_case_tl_event(
         self, case_guid: UUID, tl_event: TimelineEvent
