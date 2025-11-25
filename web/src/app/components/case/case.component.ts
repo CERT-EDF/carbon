@@ -878,14 +878,18 @@ export class CaseComponent implements OnDestroy {
         .deleteCase(this.caseMeta!.guid)
         .pipe(take(1))
         .subscribe({
-          next: () => this.apiService.deleteEvent(ev.guid, this.caseMeta!.guid)
-      .pipe(take(1))
-      .subscribe({
-        next: () => this.trashEvents$ = this.apiService
-      .getCaseTrash(this.caseMeta!.guid)
-      .pipe(map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())))
-      });
-          error: () => this.utilsService.toast('error', 'Error', 'An error occured, case not deleted'),
+          next: () =>
+            this.apiService
+              .deleteEvent(ev.guid, this.caseMeta!.guid)
+              .pipe(take(1))
+              .subscribe({
+                next: () =>
+                  (this.trashEvents$ = this.apiService
+                    .getCaseTrash(this.caseMeta!.guid)
+                    .pipe(
+                      map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())),
+                    )),
+              }),
         });
     });
   }
