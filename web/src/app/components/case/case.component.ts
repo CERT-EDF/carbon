@@ -885,8 +885,8 @@ export class CaseComponent implements OnDestroy {
   }
 
   deleteEvent(ev: CaseEvent) {
-    const confirm_text = event.title.substring(0, Math.min(event.title.length, 20));
     if (!this.caseMeta || !this.caseMeta.name) return;
+    const confirm_text = event.title.substring(0, Math.min(event.title.length, 20));
     const modal = this.dialogService.open(DeleteConfirmModalComponent, {
       header: 'Confirm to delete',
       modal: true,
@@ -901,21 +901,21 @@ export class CaseComponent implements OnDestroy {
     modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
       if (!confirmed || confirm_text != confirmed) return;
       this.apiService
-        .deleteCase(this.caseMeta!.guid)
+        .deleteEvent(ev.guid, this.caseMeta!.guid)
         .pipe(take(1))
         .subscribe({
           next: () =>
-            this.apiService
-              .deleteEvent(ev.guid, this.caseMeta!.guid)
-              .pipe(take(1))
-              .subscribe({
-                next: () =>
-                  (this.trashEvents$ = this.apiService
-                    .getCaseTrash(this.caseMeta!.guid)
-                    .pipe(
-                      map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())),
-                    )),
-              }),
+            (this.trashEvents$ = this.apiService
+            .getCaseTrash(this.caseMeta!.guid)
+            .pipe(
+              map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())),
+            )),
+        }),
+    });
+    
+    modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
+      if (!confirmed || confirm_text != confirmed) return;
+            
         });
     });
   }
