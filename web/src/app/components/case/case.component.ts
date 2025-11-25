@@ -371,6 +371,32 @@ export class CaseComponent implements OnDestroy {
       });
   }
 
+  deleteCase() {
+    if (!this.caseMeta || !this.caseMeta.name) return;
+    const confirm_text = this.caseMeta?.name;
+    const modal = this.dialogService.open(DeleteConfirmModalComponent, {
+      header: 'Confirm to delete',
+      modal: true,
+      closable: true,
+      dismissableMask: true,
+      breakpoints: {
+        '640px': '90vw',
+      },
+      data: confirm_text,
+    });
+
+    modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
+      if (!confirmed || confirm_text != confirmed) return;
+      this.apiService
+        .deleteCase(this.caseMeta!.guid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => this.utilsService.navigateHomeWithError(),
+          error: () => this.utilsService.toast('error', 'Error', 'An error occured, case not deleted'),
+        });
+    });
+  }
+
   transformEventsToEventsByDate() {
     this.closedEventsGUID.clear();
 
