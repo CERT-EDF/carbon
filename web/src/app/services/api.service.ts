@@ -167,6 +167,10 @@ export class ApiService {
       .pipe(map((resp) => resp.data));
   }
 
+  deleteCase(caseGuid: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiBaseUrl}/case/${caseGuid}`);
+  }
+
   postCaseEvent(eventData: Partial<CaseEvent>, caseGuid: string): Observable<CaseEvent> {
     return this.http
       .post<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${caseGuid}/event`, { ...eventData })
