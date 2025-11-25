@@ -911,13 +911,7 @@ export class CaseComponent implements OnDestroy {
               map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())),
             )),
         }),
-    });
-    
-    modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
-      if (!confirmed || confirm_text != confirmed) return;
-            
-        });
-    });
+    })
   }
 
   openExportModal(): void {
