@@ -193,6 +193,10 @@ export class ApiService {
     return this.http.put<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${case_guid}/event/${event_guid}/trash`, {});
   }
 
+  deleteEvent(case_guid: string, event_guid: string): Observable<any> {
+    return this.http.delete<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${case_guid}/event/${event_guid}/delete`, {});
+  }
+
   getCaseEventsSSE(guid: string): EventSource {
     const eventSource = new EventSource(`${this.apiBaseUrl}/case/${guid}/subscribe`);
     eventSource.onerror = () => {

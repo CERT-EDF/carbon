@@ -387,6 +387,7 @@
 
           @if (!caseMeta?.closed || event.gray) {
           <div class="flex justify-end items-center">
+            <p-button text icon="pi pi-trash" severity="danger" pTooltip="Delete" (click)="deleteEvent(event)" />
             <p-button text icon="pi pi-undo" pTooltip="Restore" [disabled]="event.gray" (click)="restoreEvent(event)" />
           </div>
           }

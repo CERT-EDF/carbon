@@ -292,6 +292,11 @@ export class CaseComponent implements OnDestroy {
           this.transformEventsToEventsByDate();
           break;
 
+        case 'delete_event':
+          this.events = this.events.filter((e) => e.guid !== eventData.data?.guid);
+          this.transformEventsToEventsByDate();
+          break;
+
         case 'restore_event':
           const restoredEventExists = this.events.find((e) => e.guid === eventData.data?.restored_event.guid);
           if (!restoredEventExists) {
@@ -851,6 +856,38 @@ export class CaseComponent implements OnDestroy {
           this.addEventToArray(event);
         },
       });
+  }
+
+  deleteEvent(ev: CaseEvent) {
+    const confirm_text = event.title.substring(0, Math.min(event.title.length, 20));
+    if (!this.caseMeta || !this.caseMeta.name) return;
+    const modal = this.dialogService.open(DeleteConfirmModalComponent, {
+      header: 'Confirm to delete',
+      modal: true,
+      closable: true,
+      dismissableMask: true,
+      breakpoints: {
+        '640px': '90vw',
+      },
+      data: confirm_text,
+    });
+
+    modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
+      if (!confirmed || confirm_text != confirmed) return;
+      this.apiService
+        .deleteCase(this.caseMeta!.guid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => this.apiService.deleteEvent(ev.guid, this.caseMeta!.guid)
+      .pipe(take(1))
+      .subscribe({
+        next: () => this.trashEvents$ = this.apiService
+      .getCaseTrash(this.caseMeta!.guid)
+      .pipe(map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())))
+      });
+          error: () => this.utilsService.toast('error', 'Error', 'An error occured, case not deleted'),
+        });
+    });
   }
 
   openExportModal(): void {
