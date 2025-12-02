@@ -167,6 +167,10 @@ export class ApiService {
       .pipe(map((resp) => resp.data));
   }
 
+  deleteCase(caseGuid: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiBaseUrl}/case/${caseGuid}`);
+  }
+
   postCaseEvent(eventData: Partial<CaseEvent>, caseGuid: string): Observable<CaseEvent> {
     return this.http
       .post<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${caseGuid}/event`, { ...eventData })
@@ -193,8 +197,12 @@ export class ApiService {
     return this.http.put<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${case_guid}/event/${event_guid}/trash`, {});
   }
 
+  deleteEvent(case_guid: string, event_guid: string): Observable<any> {
+    return this.http.delete<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${case_guid}/event/${event_guid}`, {});
+  }
+
   getCaseEventsSSE(guid: string): EventSource {
-    const eventSource = new EventSource(`${this.apiBaseUrl}/case/${guid}/subscribe`);
+    const eventSource = new EventSource(`${this.apiBaseUrl}/events/case/${guid}`);
     eventSource.onerror = () => {
       this.utils.toast('error', 'Error', `EventSource disconnected`);
     };
