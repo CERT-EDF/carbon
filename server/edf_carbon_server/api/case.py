@@ -235,7 +235,7 @@ async def api_case_tl_event_delete(request: Request):
     await fusion_evt_api.notify(
         category='delete_event',
         case=case,
-        ext={'user': identity.username, 'event_guid': str(tl_event_guid)},
+        ext={'user': identity.username, 'data': {'guid': str(tl_event_guid)}},
     )
     return json_response()
 
@@ -428,7 +428,7 @@ async def api_case_trash_tl_event_put(request: Request):
     case = await storage.retrieve_case(case_guid)
     fusion_evt_api = get_fusion_evt_api(request)
     await fusion_evt_api.notify(
-        type='trash_event',
+        category='trash_event',
         case=case,
         ext={'user': identity.username, 'data': data},
     )
@@ -474,7 +474,7 @@ async def api_case_users_get(request: Request):
     ]
     fusion_evt_api = get_fusion_evt_api(request)
     if active:
-        usernames = await fusion_evt_api.subscribers(case)
+        usernames = fusion_evt_api.subscribers(case)
         identities = [
             identity
             for identity in identities

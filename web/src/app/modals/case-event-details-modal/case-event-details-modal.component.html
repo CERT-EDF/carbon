@@ -18,26 +18,26 @@
     <div class="col-span-full md:col-span-1 xl:col-span-2">
       <div class="event-box">
         <div class="text-blue-800 truncate">Category</div>
-        <span class="event-box-text truncate">{{ event?.category }}</span>
+        <span class="event-box-text">{{ event?.category }}</span>
       </div>
     </div>
 
-    <div class="col-span-full md:col-span-2 xl:col-span-3">
+    <div class="col-span-full md:col-span-2">
       <div class="event-box">
         <div class="text-blue-800">GUID</div>
-        <span [pTooltip]="event?.guid || ''" class="event-box-text truncate cursor-pointer"
+        <span [pTooltip]="event?.guid || ''" class="event-box-text cursor-pointer"
           [cdkCopyToClipboard]="event?.guid || ''">{{ event?.guid }}</span>
       </div>
     </div>
 
-    <div class="col-span-full md:col-span-2 xl:col-span-3">
+    <div class="col-span-full md:col-span-2">
       <div class="event-box">
         <div class="text-blue-800">Created By</div>
         <span class="event-box-text">{{ event?.creator }}</span>
       </div>
     </div>
 
-    <div class="col-span-full md:col-span-2 xl:col-span-3">
+    <div class="col-span-full md:col-span-2">
       <div class="event-box">
         <div class="text-blue-800">Date @if (tz == 'UTC') {(UTC)}</div>
         <span class="event-box-text">{{ event?.date | date: 'YYYY-MM-dd, HH:mm':tz }}</span>

@@ -17,7 +17,7 @@ import { AsyncPipe, DatePipe, KeyValue, KeyValuePipe } from '@angular/common';
 import { MessageModule } from 'primeng/message';
 import { TabsModule } from 'primeng/tabs';
 import { InputGroupModule } from 'primeng/inputgroup';
-import { CaseMetadata } from '../../types/case';
+import { CaseMetadata, FusionEvent } from '../../types/case';
 import { IdleDetectorService } from '../../services/idle-detector.service';
 import { debounceTime, map, Observable, skip, Subscription, take } from 'rxjs';
 import { CaseEvent, EventCategory } from '../../types/event';
@@ -29,13 +29,14 @@ import { MenuItem, SelectItemGroup } from 'primeng/api';
 import { EventCreateModalComponent } from '../../modals/create-event-modal/event-create-modal.component';
 import { YesNoModalComponent } from '../../modals/yes-no-modal/yes-no-modal.component';
 import { CaseEventDetailsModalComponent } from '../../modals/case-event-details-modal/case-event-details-modal.component';
-import { Identity, SearchPattern } from '../../types/API';
+import { SearchPattern } from '../../types/API';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { DialogModule } from 'primeng/dialog';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DeleteConfirmModalComponent } from '../../modals/delete-confirm-modal/delete-confirm-modal.component';
 
 export interface Regex {
   regex: RegExp;
@@ -141,7 +142,7 @@ export class CaseComponent implements OnDestroy {
     private route: ActivatedRoute,
     private idleService: IdleDetectorService,
     private utilsService: UtilsService,
-    private dialogService: DialogService,
+    private dialogService: DialogService
   ) {
     const caseGuid = this.route.snapshot.paramMap.get('guid')!;
     this.timezone = this.utilsService.tz;
@@ -251,13 +252,14 @@ export class CaseComponent implements OnDestroy {
 
   handleSSEEvent(messageEvent: MessageEvent): void {
     if (!messageEvent.data) return;
-    const eventData: any = JSON.parse(messageEvent.data);
+    const event: FusionEvent = JSON.parse(messageEvent.data);
 
     this.zone.run(() => {
-      const user = eventData['user'];
+      const ext = event.ext;
+      const user = ext.user;
       if (user == this.username) return;
 
-      switch (eventData.type) {
+      switch (event.category) {
         case 'subscribe':
           if (!this.activeUsers.includes(user)) {
             this.activeUsers.push(user);
@@ -269,61 +271,61 @@ export class CaseComponent implements OnDestroy {
           break;
 
         case 'create_event':
-          const eventExists = this.events.find((e) => e.guid === eventData.data.guid);
+          const eventExists = this.events.find((e) => e.guid === ext.data.guid);
           if (eventExists) break;
 
-          this.events.push(eventData.data);
+          this.events.push(ext.data);
           this.transformEventsToEventsByDate();
 
-          if (this.idleService.isIdle) this.unseenEvents.push(eventData.data.id);
+          if (this.idleService.isIdle) this.unseenEvents.push(ext.data.id);
 
-          if (eventData.data.category === 'TASK' && eventData.data.assignees?.includes(this.username)) {
+          if (ext.data.category === 'TASK' && ext.data.assignees?.includes(this.username)) {
             this.utilsService.toast('info', 'New task!', 'You have been assigned to a new task');
           }
           break;
 
         case 'star_event':
-          const eventToStar = this.events.find((e) => e.guid === eventData.data?.guid);
-          if (eventToStar) eventToStar.starred = eventData.data?.starred || false;
+          const eventToStar = this.events.find((e) => e.guid === ext.data?.guid);
+          if (eventToStar) eventToStar.starred = ext.data?.starred || false;
           break;
 
         case 'trash_event':
-          this.events = this.events.filter((e) => e.guid !== eventData.data?.guid);
+          this.events = this.events.filter((e) => e.guid !== ext.data?.guid);
           this.transformEventsToEventsByDate();
           break;
 
         case 'delete_event':
-          this.events = this.events.filter((e) => e.guid !== eventData.data?.guid);
+          this.events = this.events.filter((e) => e.guid !== ext.data?.guid);
           this.transformEventsToEventsByDate();
           break;
 
         case 'restore_event':
-          const restoredEventExists = this.events.find((e) => e.guid === eventData.data?.restored_event.guid);
+          const restoredEventExists = this.events.find((e) => e.guid === ext.data?.restored_event.guid);
           if (!restoredEventExists) {
-            this.events.push(eventData.data?.restored_event);
+            this.events.push(ext.data?.restored_event);
             this.transformEventsToEventsByDate();
             if (this.idleService.isIdle) {
-              this.unseenEvents.push(eventData.data.id);
+              this.unseenEvents.push(ext.data.id);
             }
           }
           break;
 
         case 'update_case':
-          if (eventData.data.groups) {
+          if (event.case.groups) {
             this.apiService.groups$.pipe(take(1)).subscribe({
               next: (groups) => {
                 const hasGroupOverlap = groups.some((group) =>
-                  Array.isArray(eventData.data.groups)
-                    ? eventData.data.groups.includes(group)
-                    : group === eventData.data.groups,
+                  Array.isArray(event.case.groups) ? event.case.groups.includes(group) : group === event.case.groups
                 );
 
                 if (!hasGroupOverlap) {
                   this.utilsService.toast(
                     'error',
                     'Error',
-                    `Case groups were modified by ${user || 'Unknown user'}, you are not allowed to view the case anymore.`,
-                    4500,
+                    `Case groups were modified by ${
+                      user || 'Unknown user'
+                    }, you are not allowed to view the case anymore.`,
+                    4500
                   );
                   this.utilsService.navigateHomeWithError();
                 }
@@ -331,22 +333,27 @@ export class CaseComponent implements OnDestroy {
             });
           }
 
-          if (eventData.data.closed) {
-            this.utilsService.toast('error', 'Error', `This Case was closed by ${user || 'Unknown user'}`, 3500);
+          if (event.case.closed) {
+            this.utilsService.toast('error', 'Error', `This case was closed by ${user || 'Unknown user'}`, 3500);
             this.isDisplayingSplash = true;
             this.isReadonly = true;
             this.isFilterMode = false;
             this.events = [];
             this.displayedEventsByDate = {};
-          } else if (!eventData.data.closed) {
-            this.utilsService.toast('info', 'Info', `This Case was reopened by ${user || 'Unknown user'}`, 3500);
+          } else if (!event.case.closed) {
+            this.utilsService.toast('info', 'Info', `This case was reopened by ${user || 'Unknown user'}`, 3500);
             if (this.caseMeta) this.caseMeta.closed = undefined;
             this.isDisplayingSplash = false;
             this.isReadonly = false;
             this.subscribeToCaseEvents();
           }
 
-          this.caseMeta = { ...this.caseMeta, ...eventData.data };
+          this.caseMeta = { ...this.caseMeta, ...event.case };
+          break;
+
+        case 'delete_case':
+          this.utilsService.toast('info', 'Case deleted', `This case was deleted by ${user || 'Unknown user'}`, 3500);
+          this.utilsService.navigateHomeWithError();
           break;
 
         default:
@@ -369,32 +376,6 @@ export class CaseComponent implements OnDestroy {
 
         if (metadata.utc_display) this.setTimezoneUTC(this.isUsingUTC);
       });
-  }
-
-  deleteCase() {
-    if (!this.caseMeta || !this.caseMeta.name) return;
-    const confirm_text = this.caseMeta?.name;
-    const modal = this.dialogService.open(DeleteConfirmModalComponent, {
-      header: 'Confirm to delete',
-      modal: true,
-      closable: true,
-      dismissableMask: true,
-      breakpoints: {
-        '640px': '90vw',
-      },
-      data: confirm_text,
-    });
-
-    modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
-      if (!confirmed || confirm_text != confirmed) return;
-      this.apiService
-        .deleteCase(this.caseMeta!.guid)
-        .pipe(take(1))
-        .subscribe({
-          next: () => this.utilsService.navigateHomeWithError(),
-          error: () => this.utilsService.toast('error', 'Error', 'An error occured, case not deleted'),
-        });
-    });
   }
 
   transformEventsToEventsByDate() {
@@ -524,7 +505,7 @@ export class CaseComponent implements OnDestroy {
         const matchedEvents = this.eventsByDate[date].filter(
           (event) =>
             this.filteredCategories.includes(event.category) &&
-            patterns.some((regex) => regex.test(event.title) || regex.test(event.description || '')),
+            patterns.some((regex) => regex.test(event.title) || regex.test(event.description || ''))
         );
         if (matchedEvents.length) {
           filteredEventsByDate[date] = matchedEvents;
@@ -533,7 +514,7 @@ export class CaseComponent implements OnDestroy {
     } else {
       Object.keys(this.eventsByDate).forEach((date) => {
         const matchedEvents = this.eventsByDate[date].filter((event) =>
-          this.filteredCategories.includes(event.category),
+          this.filteredCategories.includes(event.category)
         );
         if (matchedEvents.length) {
           filteredEventsByDate[date] = matchedEvents;
@@ -699,7 +680,7 @@ export class CaseComponent implements OnDestroy {
                 'error',
                 'Error',
                 'Task is newer than Event: closing Event date cannot be inferior to Task date',
-                6000,
+                6000
               );
               return;
             }
@@ -886,7 +867,6 @@ export class CaseComponent implements OnDestroy {
 
   deleteEvent(ev: CaseEvent) {
     if (!this.caseMeta || !this.caseMeta.name) return;
-    const confirm_text = event.title.substring(0, Math.min(event.title.length, 20));
     const modal = this.dialogService.open(DeleteConfirmModalComponent, {
       header: 'Confirm to delete',
       modal: true,
@@ -895,23 +875,45 @@ export class CaseComponent implements OnDestroy {
       breakpoints: {
         '640px': '90vw',
       },
-      data: confirm_text,
+      data: ev.title.substring(0, Math.min(ev.title.length, 20)),
     });
 
-    modal.onClose.pipe(take(1)).subscribe((confirmed: string | null) => {
-      if (!confirmed || confirm_text != confirmed) return;
+    modal.onClose.pipe(take(1)).subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
       this.apiService
-        .deleteEvent(ev.guid, this.caseMeta!.guid)
+        .deleteEvent(this.caseMeta!.guid, ev.guid)
         .pipe(take(1))
         .subscribe({
           next: () =>
             (this.trashEvents$ = this.apiService
-            .getCaseTrash(this.caseMeta!.guid)
-            .pipe(
-              map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())),
-            )),
-        }),
-    })
+              .getCaseTrash(this.caseMeta!.guid)
+              .pipe(map((events) => events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())))),
+        });
+    });
+  }
+
+  deleteCase() {
+    if (!this.caseMeta || !this.caseMeta.name) return;
+    const modal = this.dialogService.open(DeleteConfirmModalComponent, {
+      header: 'Confirm to delete',
+      modal: true,
+      closable: true,
+      dismissableMask: true,
+      breakpoints: {
+        '640px': '90vw',
+      },
+      data: this.caseMeta?.name,
+    });
+
+    modal.onClose.pipe(take(1)).subscribe((confirmed: boolean) => {
+      if (!confirmed) return;
+      this.apiService
+        .deleteCase(this.caseMeta!.guid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => this.utilsService.navigateHomeWithError(),
+        });
+    });
   }
 
   openExportModal(): void {
@@ -933,7 +935,7 @@ export class CaseComponent implements OnDestroy {
         .exportCaseEvents(
           this.caseMeta!.guid,
           this.exportOptionEventValue === 'starred',
-          this.mdOptionFieldsInput.value as string[],
+          this.mdOptionFieldsInput.value as string[]
         )
         .pipe(take(1))
         .subscribe((blob) => {

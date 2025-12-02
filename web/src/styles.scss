@@ -85,6 +85,7 @@ html {
   white-space: pre-wrap;
   position: relative;
   word-break: break-word;
+  min-width: 0;
 
   &-text {
     margin-top: 0.7rem;
@@ -92,6 +93,9 @@ html {
       display: flex;
       margin-top: 0.45rem;
     }
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .description-copy {
