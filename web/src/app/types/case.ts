@@ -8,6 +8,7 @@ export interface CaseMetadata {
   description?: string;
   acs: string[];
   utc_display: boolean;
+  groups: string[];
   managed: boolean;
 
   imgUrl?: string; //Injected value in API getCases
@@ -21,4 +22,11 @@ export interface CaseStat {
   guid: string;
   pending: number;
   total: number;
+}
+
+export interface FusionEvent {
+  source: string;
+  category: string;
+  case: CaseMetadata;
+  ext: any;
 }

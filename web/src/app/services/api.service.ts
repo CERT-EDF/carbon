@@ -1,5 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, combineLatest, distinctUntilChanged, map, of, shareReplay, tap } from 'rxjs';
+import {
+  BehaviorSubject,
+  Observable,
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  map,
+  of,
+  retry,
+  shareReplay,
+  tap,
+  throwError,
+} from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { UtilsService } from './utils.service';
 import { APIResponse, Constant, Identity, Info, User } from '../types/API';
@@ -167,6 +179,10 @@ export class ApiService {
       .pipe(map((resp) => resp.data));
   }
 
+  deleteCase(caseGuid: string): Observable<any> {
+    return this.http.delete<any>(`${this.apiBaseUrl}/case/${caseGuid}`);
+  }
+
   postCaseEvent(eventData: Partial<CaseEvent>, caseGuid: string): Observable<CaseEvent> {
     return this.http
       .post<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${caseGuid}/event`, { ...eventData })
@@ -193,12 +209,33 @@ export class ApiService {
     return this.http.put<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${case_guid}/event/${event_guid}/trash`, {});
   }
 
-  getCaseEventsSSE(guid: string): EventSource {
-    const eventSource = new EventSource(`${this.apiBaseUrl}/case/${guid}/subscribe`);
-    eventSource.onerror = () => {
-      this.utils.toast('error', 'Error', `EventSource disconnected`);
-    };
-    return eventSource;
+  deleteEvent(case_guid: string, event_guid: string): Observable<any> {
+    return this.http.delete<APIResponse<CaseEvent>>(`${this.apiBaseUrl}/case/${case_guid}/event/${event_guid}`, {});
+  }
+
+  getCaseEventsSSE(guid: string): Observable<MessageEvent> {
+    return new Observable<MessageEvent>((obs) => {
+      const eventSource = new EventSource(`${this.apiBaseUrl}/events/case/${guid}`);
+      eventSource.onmessage = (event: MessageEvent) => obs.next(event);
+      eventSource.onerror = (error) => {
+        this.utils.toast('error', 'EventSource disconnected', 'EventSource disconnected, reconnecting...');
+        obs.error(error);
+        eventSource.close();
+      };
+      eventSource.onopen = () => console.log('EventSource connected');
+      return () => eventSource.close();
+    }).pipe(
+      retry({ count: 5, delay: 1000, resetOnSuccess: true }),
+      catchError((error) => {
+        this.utils.toast(
+          'error',
+          'EventSource disconnected',
+          'Roses are red, Violets are blue, EventSource is disconnected, there is nothing I can do for you',
+          -1,
+        );
+        return throwError(() => error);
+      }),
+    );
   }
 
   exportCaseEvents(caseGuid: string, starredOnly: boolean, fields?: string[]): Observable<Blob> {
@@ -218,14 +255,6 @@ export class ApiService {
 
   getCaseAvailableUsers(guid: string): Observable<string[]> {
     return this.http.get<APIResponse<User[]>>(`${this.apiBaseUrl}/case/${guid}/users`).pipe(
-      map((resp) => {
-        return resp.data.map((d) => d.username).sort((a: string, b: string) => (a > b ? 1 : -1));
-      }),
-    );
-  }
-
-  getCaseActiveUsers(guid: string): Observable<string[]> {
-    return this.http.get<APIResponse<User[]>>(`${this.apiBaseUrl}/case/${guid}/users?active`).pipe(
       map((resp) => {
         return resp.data.map((d) => d.username).sort((a: string, b: string) => (a > b ? 1 : -1));
       }),

@@ -27,7 +27,7 @@
 
     @if (eventForm.get('category')?.value == 'TASK') {
     <p-multiselect [showToggleAll]="false" [options]="(users$|async) || []" placeholder="Assignees" appendTo="body" scrollHeight="250px"
-      display="chip" id="acs" optionLabel="username" optionValue="username" id="assignees" formControlName="assignees" selectedItemsLabel="{0} users selected"
+      display="chip" id="acs" id="assignees" formControlName="assignees" selectedItemsLabel="{0} users selected"
       fluid class="capitalize flex items-center" />
 
     <p-floatlabel variant="in" class="w-full">
