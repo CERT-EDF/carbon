@@ -8,34 +8,51 @@ export const Interceptor = (req: HttpRequest<unknown>, next: HttpHandlerFn): Obs
   const apiService = inject(ApiService);
   const utilsService = inject(UtilsService);
 
-  if (!req.headers.has('Content-Type')) {
+  if (!(req.body instanceof FormData) && !req.headers.has('Content-Type')) {
     req = req.clone({ setHeaders: { 'Content-Type': 'application/json' } });
   }
 
   return next(req).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status == 400) {
-        console.error(err);
-        utilsService.toast('error', 'Bad Request', `${err.error || 'Unknown error, check console for details'}`);
-      }
+      switch (err.status) {
+        case 400:
+          console.error(err);
+          utilsService.toast(
+            'error',
+            'Bad Request',
+            `${err.error.message || err.message || 'Unknown error, check console for details'}`,
+          );
+          break;
 
-      if (err.status == 401) {
-        apiService.unauthorizedRedirectLogin();
-      }
+        case 401:
+          apiService.unauthorizedRedirectLogin();
+          break;
 
-      if (err.status == 403) {
-        utilsService.navigateHomeWithError();
-      }
+        case 403:
+          utilsService.toast('error', 'Forbidden', 'You are not allowed to do this', 3500);
+          break;
 
-      if (err.status == 404) {
-        utilsService.toast('error', 'Not found', `${err.error || 'Entity not found, check console for details'}`, 3500);
-        utilsService.navigateHomeWithError();
-      }
+        case 404:
+          utilsService.toast(
+            'error',
+            'Not found',
+            `${err.error.message || err.message || 'Entity not found, check console for details'}`,
+            3500,
+          );
+          break;
 
-      if (err.status == 502) {
-        utilsService.toast('error', 'Bad Gateway', 'Verify the server is up and running');
-        apiService.unauthorizedRedirectLogin();
-        return throwError(() => `Bad Gateway: ${err.error || 'Unknown error, check console for details'}`);
+        case 502:
+          utilsService.toast('error', 'Bad Gateway', 'Verify the server is up and running');
+          apiService.unauthorizedRedirectLogin();
+          return throwError(
+            () =>
+              new Error(
+                `Bad Gateway: ${err.error.message || err.message || 'Unknown error, check console for details'}`,
+              ),
+          );
+
+        default:
+          break;
       }
 
       return throwError(() => err);

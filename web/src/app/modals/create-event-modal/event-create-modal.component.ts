@@ -66,12 +66,7 @@ export class EventCreateModalComponent {
     });
 
     let c = this.config.data;
-    if (c.isPublicCase) {
-      this.users$ = this.apiService.getCaseAvailableUsers(this.config.data.caseID);
-    } else {
-      this.users$ = this.apiService.getIdentities().pipe(map((identity) => identity.users));
-    }
-
+    this.users$ = this.apiService.getCaseAvailableUsers(this.config.data.caseID);
     this.categories = c.categories;
     this.pending = c.pending;
 

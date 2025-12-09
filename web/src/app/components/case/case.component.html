@@ -387,6 +387,7 @@
 
           @if (!caseMeta?.closed || event.gray) {
           <div class="flex justify-end items-center">
+            <p-button text icon="pi pi-trash" severity="danger" pTooltip="Delete" (click)="deleteEvent(event)" />
             <p-button text icon="pi pi-undo" pTooltip="Restore" [disabled]="event.gray" (click)="restoreEvent(event)" />
           </div>
           }
@@ -459,11 +460,12 @@
       </div>
     </div>
 
-    <div class="mt-4 flex justify-center">
+    <div class="mt-4 flex justify-end gap-2">
       @if (caseMeta?.closed) {
       <p-button text label="Open Case" icon="pi pi-lock-open" (click)="reopenCase()" />
       } @else {
-      <p-button text severity="danger" label="Close Case" icon="pi pi-lock" (click)="closeCase()" />
+      <p-button text severity="danger" label="Delete" icon="pi pi-trash" (click)="deleteCase()" />
+      <p-button text severity="danger" label="Close" icon="pi pi-lock" (click)="closeCase()" />
       }
     </div>
   </section>

@@ -164,15 +164,15 @@ async def api_case_tl_event_post(request: Request):
     tl_event = await storage.create_tl_event(case_guid, body)
     if not tl_event:
         return json_response(status=400, message="Invalid timeline event")
-    data = tl_event.to_dict()
+    event = tl_event.to_dict()
     case = await storage.retrieve_case(case_guid)
     fusion_evt_api = get_fusion_evt_api(request)
     await fusion_evt_api.notify(
         category='create_event',
         case=case,
-        ext={'user': identity.username, 'data': data},
+        ext=event,
     )
-    return json_response(data=data)
+    return json_response(data=event)
 
 
 async def api_case_tl_event_put(request: Request):
@@ -198,15 +198,15 @@ async def api_case_tl_event_put(request: Request):
     tl_event = await storage.update_tl_event(case_guid, tl_event_guid, body)
     if not tl_event:
         return json_response(status=404, message="Timeline event not found")
-    data = tl_event.to_dict()
+    event = tl_event.to_dict()
     case = await storage.retrieve_case(case_guid)
     fusion_evt_api = get_fusion_evt_api(request)
     await fusion_evt_api.notify(
         category='update_event',
         case=case,
-        ext={'user': identity.username, 'data': data},
+        ext=event,
     )
-    return json_response(data=data)
+    return json_response(data=event)
 
 
 async def api_case_tl_event_delete(request: Request):
@@ -217,7 +217,7 @@ async def api_case_tl_event_delete(request: Request):
     tl_event_guid = get_guid(request, 'tl_event_guid')
     if not tl_event_guid:
         return json_response(status=400, message="Invalid timeline event GUID")
-    identity, storage = await prologue(
+    _, storage = await prologue(
         request,
         'delete_event',
         context={
@@ -235,7 +235,7 @@ async def api_case_tl_event_delete(request: Request):
     await fusion_evt_api.notify(
         category='delete_event',
         case=case,
-        ext={'user': identity.username, 'event_guid': str(tl_event_guid)},
+        ext={'guid': str(tl_event_guid)},
     )
     return json_response()
 
@@ -333,17 +333,17 @@ async def api_case_restore_tl_event_put(request: Request):
     tl_event = await storage.update_tl_event(
         case_guid, tl_event_guid, {'trashed': False}
     )
-    data = {'restored_event': tl_event.to_dict()}
+    event = tl_event.to_dict()
     if tl_event.closes:
-        data.update({'closes': str(tl_event.closes)})
+        event.update({'closes': str(tl_event.closes)})
     case = await storage.retrieve_case(case_guid)
     fusion_evt_api = get_fusion_evt_api(request)
     await fusion_evt_api.notify(
         category='restore_event',
         case=case,
-        ext={'user': identity.username, 'data': data},
+        ext=event,
     )
-    return json_response(data=tl_event.to_dict())
+    return json_response(data=event)
 
 
 async def api_case_star_tl_event_put(request: Request):
@@ -368,15 +368,15 @@ async def api_case_star_tl_event_put(request: Request):
     tl_event = await storage.update_tl_event(
         case_guid, tl_event.guid, {'starred': not tl_event.starred}
     )
-    data = tl_event.to_dict()
+    event = tl_event.to_dict()
     case = await storage.retrieve_case(case_guid)
     fusion_evt_api = get_fusion_evt_api(request)
     await fusion_evt_api.notify(
         category='star_event',
         case=case,
-        ext={'user': identity.username, 'data': data},
+        ext=event,
     )
-    return json_response(data=data)
+    return json_response(data=event)
 
 
 async def api_case_trash_tl_event_put(request: Request):
@@ -424,15 +424,15 @@ async def api_case_trash_tl_event_put(request: Request):
     tl_event = await storage.update_tl_event(
         case_guid, tl_event.guid, {'trashed': True}
     )
-    data = tl_event.to_dict()
+    event = tl_event.to_dict()
     case = await storage.retrieve_case(case_guid)
     fusion_evt_api = get_fusion_evt_api(request)
     await fusion_evt_api.notify(
-        type='trash_event',
+        category='trash_event',
         case=case,
-        ext={'user': identity.username, 'data': data},
+        ext=event,
     )
-    return json_response(data=data)
+    return json_response(data=event)
 
 
 async def api_case_trash_get(request: Request):
@@ -458,11 +458,10 @@ async def api_case_users_get(request: Request):
     case_guid = get_guid(request, 'case_guid')
     if not case_guid:
         return json_response(status=400, message="Invalid case GUID")
-    active = 'active' in request.query
     _, storage = await prologue(
         request,
         'case_users',
-        context={'case_guid': case_guid, 'active': active},
+        context={'case_guid': case_guid},
     )
     case = await storage.retrieve_case(case_guid)
     if not case:
@@ -470,16 +469,8 @@ async def api_case_users_get(request: Request):
     identities = [
         identity.to_dict()
         async for identity in storage.enumerate_identities()
-        if identity.acs.intersection(case.acs)
+        if not case.acs or identity.acs.intersection(case.acs)
     ]
-    fusion_evt_api = get_fusion_evt_api(request)
-    if active:
-        usernames = await fusion_evt_api.subscribers(case)
-        identities = [
-            identity
-            for identity in identities
-            if identity.username in usernames
-        ]
     return json_response(data=identities)
 
 

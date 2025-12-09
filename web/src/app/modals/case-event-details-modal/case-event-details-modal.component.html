@@ -7,25 +7,25 @@
       class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-500 dark:text-red-100">Trashed</span>}
   </div>
 
-  <div class="grid md:grid-cols-6 mt-4 gap-4">
-    <div class="col-span-full md:col-span-5">
+  <div class="grid md:grid-cols-4 xl:grid-cols-6 mt-4 gap-4">
+    <div class="col-span-full md:col-span-3 xl:col-span-4">
       <div class="event-box">
         <div class="text-blue-800">Event</div>
         <span class="event-box-text cursor-pointer" [cdkCopyToClipboard]="event?.title || ''">{{ event?.title }}</span>
       </div>
     </div>
 
-    <div class="col-span-full md:col-span-1">
+    <div class="col-span-full md:col-span-1 xl:col-span-2">
       <div class="event-box">
-        <div class="text-blue-800">Category</div>
-        <span class="event-box-text truncate">{{ event?.category }}</span>
+        <div class="text-blue-800 truncate">Category</div>
+        <span class="event-box-text">{{ event?.category }}</span>
       </div>
     </div>
 
     <div class="col-span-full md:col-span-2">
       <div class="event-box">
         <div class="text-blue-800">GUID</div>
-        <span [pTooltip]="event?.guid || ''" class="event-box-text truncate cursor-pointer"
+        <span [pTooltip]="event?.guid || ''" class="event-box-text cursor-pointer"
           [cdkCopyToClipboard]="event?.guid || ''">{{ event?.guid }}</span>
       </div>
     </div>
@@ -45,7 +45,7 @@
     </div>
 
     @if (event?.category == 'TASK') {
-    <div class="col-span-full md:col-span-3">
+    <div class="col-span-full md:col-span-2 xl:col-span-4">
       <div class="event-box">
         <div class="text-blue-800">Assignees</div>
         @if (event?.assignees?.length) {
@@ -62,7 +62,7 @@
       </div>
     </div>
 
-    <div class="col-span-full md:col-span-3">
+    <div class="col-span-full md:col-span-2 xl:col-span-2">
       <div class="event-box">
         <div class="text-blue-800">Due date</div>
         @if (event?.duedate) {
@@ -74,14 +74,14 @@
     </div>
     }
 
-    <div class="col-span-full md:col-span-3">
+    <div class="col-span-full md:col-span-2 xl:col-span-3">
       <div class="event-box">
         <div class="text-blue-800">Closes</div>
         <span class="event-box-text line-clamp-1">{{ event?.closes || '-' }}</span>
       </div>
     </div>
 
-    <div class="col-span-full md:col-span-3">
+    <div class="col-span-full md:col-span-2 xl:col-span-3">
       <div class="event-box">
         <div class="text-blue-800">Closed by</div>
         <span class="event-box-text line-clamp-1"><span class="text-sm text-gray-400">{{ event?.closedBy?.date| date:
