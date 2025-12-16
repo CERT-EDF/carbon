@@ -276,11 +276,11 @@ export class CaseComponent implements OnDestroy {
         if (!restoredEventExists) this.addEventToArray(ext);
         break;
       case 'update_case':
-        if (event.case.groups) {
+        if (event.case.acs) {
           this.apiService.groups$.pipe(take(1)).subscribe({
             next: (groups) => {
               const hasGroupOverlap = groups.some((group) =>
-                Array.isArray(event.case.groups) ? event.case.groups.includes(group) : group === event.case.groups,
+                Array.isArray(event.case.acs) ? event.case.acs.includes(group) : group === event.case.acs,
               );
 
               if (!hasGroupOverlap) {
