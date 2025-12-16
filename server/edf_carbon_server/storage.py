@@ -276,7 +276,7 @@ class Storage(FusionStorage):
                 next_case_guid,
             )
             return False
-        parameters = {'guid': case_guid, 'next_guid': next_case_guid}
+        parameters = {'guid': str(case_guid), 'next_guid': str(next_case_guid)}
         try:
             await self._execute(_ATTACH_TL_EVENT, parameters)
             await self._execute(_ATTACH_CASE, parameters)

@@ -54,9 +54,9 @@
       <p-select [options]="pending" id="closes" [showClear]="true" optionLabel="title" optionValue="guid"
         formControlName="closes" fluid>
         <ng-template let-p #item>
-          <div class="flex flex-col">
+          <div class="flex flex-col max-w-full">
             <span class="text-xs text-gray-400">{{ p.date | date: 'dd MMM | HH:mm'}}</span>
-            <span class="text-[#12356D] text-sm line-clamp-1">{{ p.title }}</span>
+            <span class="text-[#12356D] text-sm whitespace-normal">{{ p.title }}</span>
           </div>
         </ng-template>
         <ng-template #dropdownicon>
