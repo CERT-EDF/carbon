@@ -8,7 +8,6 @@ export interface CaseMetadata {
   description?: string;
   acs: string[];
   utc_display: boolean;
-  groups: string[];
   managed: boolean;
 
   imgUrl?: string; //Injected value in API getCases
