@@ -98,14 +98,14 @@
         </span>
         <div class="flex grow justify-end">
           @if (pendingEvent.assignees) {
-          <span>
-            <p-avatar-group>
-              @for (assignee of pendingEvent.assignees; track $index) {
-              <p-avatar [label]="assignee[0]" shape="circle" styleClass="capitalize size-6 text-xs"
-                [class.bg-blue-200!]="assignee == username" />
-              }
-            </p-avatar-group>
-          </span>
+          <div class="flex -space-x-4 max-w-96">
+            @for (assignee of pendingEvent.assignees; track assignee) {
+            <div [pTooltip]="assignee" [class]="assignee == username ? 'bg-blue-200' : 'bg-gray-300'"
+              class="flex items-center capitalize justify-center w-8 h-8 text-xs font-medium text-white border-2 border-white rounded-full">
+              <span class="w-[1.2ch] overflow-hidden">{{ assignee }}</span>
+            </div>
+            }
+          </div>
           } @else {<span>&nbsp;</span>}
         </div>
       </div>
@@ -152,11 +152,16 @@
         }
       </div>
 
-      <p-avatar-group class="flex grow justify-end select-none">
-        @for (user of activeUsers; track user) {
-        <p-avatar [label]="user[0]" [pTooltip]="user" class="capitalize" shape="circle" />
-        }
-      </p-avatar-group>
+      <div class="flex grow justify-end select-none">
+        <div class="flex justify-end -space-x-4 max-w-96">
+          @for (user of activeUsers; track user) {
+          <div [pTooltip]="user"
+            class="flex items-center capitalize justify-center bg-gray-400 w-10 h-10 text-xs font-medium text-white border-2 border-white rounded-full">
+            <span class="w-[1.2ch] overflow-hidden">{{ user }}</span>
+          </div>
+          }
+        </div>
+      </div>
     </div>
 
     <div class="ml-12">
@@ -203,7 +208,7 @@
           <span class="absolute top-2 flex items-center justify-center w-10 h-10 -start-11 z-10">
             <img class="rounded-full object-cover" [src]="getCategoryIcon(event.category)" />
             @if (event.starred) {<span
-              class="absolute -top-1 -right-1 size-5 flex items-center justify-center rounded-full shadow-md bg-white dark:bg-surface-900"><i
+              class="absolute -top-1 -right-1 size-5 flex items-center justify-center"><i
                 class="pi pi-star-fill text-yellow-400 text-xs"></i></span>}
             @if (event.category == 'TASK' && !closedEventsGUID.has(event.guid)) {<span
               class="absolute left-0 top-0 flex size-3"><span
@@ -434,8 +439,8 @@
       </p-floatlabel>
 
       <p-multiselect [options]="acsGroups" [group]="true" [showToggleAll]="false" formControlName="acs"
-        class="flex items-center col-span-full" appendTo="body" scrollHeight="250px" display="chip" id="acs" optionLabel="label"
-        placeholder="Access Control System" optionValue="value" fluid />
+        class="flex items-center col-span-full" appendTo="body" scrollHeight="250px" display="chip" id="acs"
+        optionLabel="label" placeholder="Access Control System" optionValue="value" fluid />
 
       <p-floatlabel variant="in" class="col-span-full w-full">
         <textarea id="description" formControlName="description" pTextarea class="w-full"></textarea>
@@ -456,7 +461,10 @@
             Display dates as UTC for everyone.
           </div>
         </div>
-        <p-toggleswitch [(ngModel)]="isUsingUTC" [disabled]="!!caseMeta?.closed" (onChange)="toggleUTCDisplay()" />
+        @if (caseMeta) {
+        <p-toggleswitch [(ngModel)]="caseMeta.utc_display" [disabled]="!!caseMeta.closed"
+          (onChange)="toggleUTCDisplay()" />
+        }
       </div>
     </div>
 
