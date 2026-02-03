@@ -98,13 +98,13 @@
             [cdkCopyToClipboard]="event?.description || ''" />}
         </div>
         <span class="event-box-text md">
-          @if (event?.description) {
-          <markdown>
-            {{ event?.description }}
-          </markdown>
-          } @else {
-          -
-          }
+            @if (event?.description) {
+            <markdown>
+              {{ event?.description }}
+            </markdown>
+            } @else {
+            -
+            }
         </span>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { MessageService } from 'primeng/api';
 import { CaseMetadata } from '../types/case';
 import { CaseEvent } from '../types/event';
@@ -16,6 +17,7 @@ const CACHED_EVENT = 'CARBON_CACHED_EVENT';
 export class UtilsService {
   messageService = inject(MessageService);
   private router = inject(Router);
+  private title = inject(Title);
   private bannerText: string = '';
   readonly frontendVersion: string = version;
   isDarkMode = false;
@@ -137,5 +139,9 @@ export class UtilsService {
       day: '2-digit',
       year: 'numeric',
     });
+  }
+
+  setTitle(title: string) {
+    this.title.setTitle(title);
   }
 }

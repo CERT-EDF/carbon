@@ -97,7 +97,6 @@ export class CaseComponent implements OnDestroy {
   isReadonly = true;
   eventSource!: Subscription;
   activeUsers: string[] = [];
-  linkedEventGUID?: string;
   isShowingTaskPanel = false;
   isTrashOpened = false;
   trashEvents$?: Observable<(CaseEvent & { gray?: boolean })[]>;
@@ -195,6 +194,8 @@ export class CaseComponent implements OnDestroy {
             next: (event) => this.handleSSEEvent(event),
             error: (error) => console.error('SSE error:', error),
           });
+
+          this.utilsService.setTitle(`Carbon - ${caseMetadata.name}`);
 
           this.setTimezoneUTC(caseMetadata.utc_display);
           if (caseMetadata.closed) this.isDisplayingSplash = true;
@@ -404,14 +405,8 @@ export class CaseComponent implements OnDestroy {
     if (!hasTitle) return;
 
     let eventToCreate: CaseEvent;
-    if (eventFormData) {
-      eventToCreate = eventFormData;
-    } else {
-      eventToCreate = this.eventForm.value;
-      if (this.linkedEventGUID) {
-        eventToCreate.closes = this.linkedEventGUID;
-      }
-    }
+    if (eventFormData) eventToCreate = eventFormData;
+    else eventToCreate = this.eventForm.value;
 
     //Cache event in case the user session is not valid anymore to prevent data loss
     this.utilsService.cachedEventBeforeUpload = {
@@ -534,15 +529,6 @@ export class CaseComponent implements OnDestroy {
     });
   }
 
-  setLinkedEvent(guid: string): void {
-    this.linkedEventGUID = guid;
-  }
-
-  cancelLinkedEvent(): void {
-    this.linkedEventGUID = undefined;
-    this.resetEventForm();
-  }
-
   toggleFilterMode(): void {
     if (this.isFilterMode) {
       this.filteredCategories = [];
@@ -556,7 +542,7 @@ export class CaseComponent implements OnDestroy {
     }
   }
 
-  openEventModal(injectedEvent: CaseEvent | null = null): void {
+  openEventModal(injectedEvent: CaseEvent | null = null, currentForm: Partial<CaseEvent> | null = null): void {
     const modal = this.dialogService.open(EventCreateModalComponent, {
       header: 'Create Event',
       modal: true,
@@ -567,13 +553,9 @@ export class CaseComponent implements OnDestroy {
       breakpoints: { '960px': '90vw' },
       data: {
         caseID: this.caseMeta?.guid,
-        categories: this.categories.map((c) => ({
-          name: c.name,
-          icon: c.icon,
-          color: c.color,
-        })),
+        categories: this.categories,
         pending: this.taskEvents.filter((ev) => !this.closedEventsGUID.has(ev.guid)),
-        currentForm: { ...this.eventForm.value, closes: this.linkedEventGUID },
+        currentForm: currentForm ?? { ...this.eventForm.value },
         injEvent: injectedEvent,
       },
     });
@@ -585,8 +567,7 @@ export class CaseComponent implements OnDestroy {
   }
 
   closeTask(event: CaseEvent): void {
-    this.setLinkedEvent(event.guid);
-    this.eventForm.get('title')?.setValue(`[OK] ${event.title}`);
+    this.openEventModal(null, { title: `[OK] ${event.title}`, closes: event.guid });
   }
 
   clonEdit(eventToClone: CaseEvent) {
@@ -609,7 +590,7 @@ export class CaseComponent implements OnDestroy {
           color: c.color,
         })),
         pending: this.taskEvents.filter((ev) => !this.closedEventsGUID.has(ev.guid) || ev.guid === eventToClone.closes),
-        currentForm: { ...this.eventForm.value, closes: this.linkedEventGUID },
+        currentForm: { ...this.eventForm.value },
         injEvent: eventCopy,
       },
     });

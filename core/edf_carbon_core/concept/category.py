@@ -12,7 +12,7 @@ class Category(Concept):
     name: str
     icon: str
     color: str
-    description: str
+    description: str | None = None
     groups: set[str] = field(default_factory=set)
 
     @classmethod
@@ -46,5 +46,5 @@ TASK_CATEGORY = Category(
     name='TASK',
     icon='pending_action',
     color='#993f92',
-    description="Follow and address actions to take with the Task category. This category adds the event to a list easy to follow and guide. This category also comes with the non mandatory 'Assignees' and 'Due Date' fields.",
+    description="",
 )
