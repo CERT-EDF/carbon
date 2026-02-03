@@ -11,7 +11,6 @@ import { TabsModule } from 'primeng/tabs';
 import { TextareaModule } from 'primeng/textarea';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ApiService } from '../../services/api.service';
-import { UtilsService } from '../../services/utils.service';
 import { FocusTrapModule } from 'primeng/focustrap';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectItemGroup } from 'primeng/api';

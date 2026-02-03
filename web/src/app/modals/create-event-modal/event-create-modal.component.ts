@@ -12,10 +12,10 @@ import { TextareaModule } from 'primeng/textarea';
 import { FocusTrapModule } from 'primeng/focustrap';
 import { ApiService } from '../../services/api.service';
 import { CaseEvent, EventCategory } from '../../types/event';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { MultiSelectModule } from 'primeng/multiselect';
-
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-event-create-modal',
   imports: [
@@ -91,6 +91,18 @@ export class EventCreateModalComponent {
         this.eventForm.get('dateHour')?.setValue(new Date(date));
       }
     }
+
+    this.eventForm
+      .get('category')
+      ?.valueChanges.pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (value) => {
+          if (this.eventForm.get('description')?.value) return;
+          const description = this.categories.find((c) => c.name == value)?.description;
+          if (!description) return;
+          this.eventForm.get('description')?.setValue(description);
+        },
+      });
   }
 
   closeDialog(exit: boolean = false) {
