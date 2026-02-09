@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, ViewChild } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { InputTextModule } from 'primeng/inputtext';
@@ -137,6 +137,7 @@ export class CaseComponent implements OnDestroy {
     private utilsService: UtilsService,
     private cdr: ChangeDetectorRef,
     private dialogService: DialogService,
+    private router: Router,
   ) {
     const caseGuid = this.route.snapshot.paramMap.get('guid')!;
     this.timezone = this.utilsService.tz;
@@ -245,6 +246,7 @@ export class CaseComponent implements OnDestroy {
     if (!messageEvent.data) return;
     const event: FusionEvent = JSON.parse(messageEvent.data);
     const ext = event.ext;
+    console.log('event:', event);
     switch (event.category) {
       case 'subscribers':
         this.activeUsers = ext.usernames;
@@ -277,6 +279,17 @@ export class CaseComponent implements OnDestroy {
         if (!restoredEventExists) this.addEventToArray(ext);
         break;
       case 'update_case':
+        console.log('update case event:', event);
+        console.log('params:', event.case.guid, event.case.guid !== this.caseMeta?.guid);
+        if (event.case.guid && event.case.guid !== this.caseMeta?.guid) {
+          this.utilsService.toast(
+            'info',
+            'Info',
+            'Case was re-attached and its ID changed. You were redirected automatically.',
+            5000,
+          );
+          this.router.navigate(['/case/' + event.case.guid]);
+        }
         if (event.case.acs) {
           const acs = event.case.acs;
           this.apiService.groups$.pipe(take(1)).subscribe({
@@ -584,11 +597,7 @@ export class CaseComponent implements OnDestroy {
       breakpoints: { '960px': '90vw' },
       data: {
         caseID: this.caseMeta?.guid,
-        categories: this.categories.map((c) => ({
-          name: c.name,
-          icon: c.icon,
-          color: c.color,
-        })),
+        categories: [...this.categories],
         pending: this.taskEvents.filter((ev) => !this.closedEventsGUID.has(ev.guid) || ev.guid === eventToClone.closes),
         currentForm: { ...this.eventForm.value },
         injEvent: eventCopy,
