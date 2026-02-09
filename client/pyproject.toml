@@ -20,7 +20,7 @@ classifiers = [
     "Topic :: Security",
 ]
 dependencies = [
-    "edf-carbon-core~=2.0",
+    "edf-carbon-core~=3.0",
 ]
 
 
