@@ -11,8 +11,7 @@ class Category(Concept):
 
     name: str
     icon: str
-    color: str
-    description: str | None = None
+    template: str | None = None
     groups: set[str] = field(default_factory=set)
 
     @classmethod
@@ -20,8 +19,7 @@ class Category(Concept):
         return cls(
             name=dct['name'],
             icon=dct['icon'],
-            color=dct['color'],
-            description=dct['description'],
+            template=dct['template'],
             groups=set(dct.get('groups', [])),
         )
 
@@ -29,22 +27,15 @@ class Category(Concept):
         return {
             'name': self.name,
             'icon': self.icon,
-            'color': self.color,
-            'description': self.description,
+            'template': self.template,
             'groups': list(self.groups),
         }
 
     def update(self, dct):
         self.name = dct.get('name', self.name)
         self.icon = dct.get('icon', self.icon)
-        self.color = dct.get('color', self.color)
-        self.description = dct.get('description', self.description)
+        self.template = dct.get('template', self.template)
         self.groups = set(dct.get('groups', self.groups))
 
 
-TASK_CATEGORY = Category(
-    name='TASK',
-    icon='pending_action',
-    color='#993f92',
-    description="",
-)
+TASK_CATEGORY = Category(name='TASK', icon='pending_action')
