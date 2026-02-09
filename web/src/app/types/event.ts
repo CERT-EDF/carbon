@@ -19,7 +19,6 @@ export interface CaseEvent {
 export interface EventCategory {
   name: string;
   icon: string;
-  color: string;
-  description?: string;
+  template?: string;
   groups?: string[];
 }
