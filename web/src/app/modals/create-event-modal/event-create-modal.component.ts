@@ -98,9 +98,9 @@ export class EventCreateModalComponent {
       .subscribe({
         next: (value) => {
           if (this.eventForm.get('description')?.value) return;
-          const description = this.categories.find((c) => c.name == value)?.description;
-          if (!description) return;
-          this.eventForm.get('description')?.setValue(description);
+          const template = this.categories.find((c) => c.name == value)?.template;
+          if (!template) return;
+          this.eventForm.get('description')?.setValue(template);
         },
       });
   }
