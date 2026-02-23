@@ -280,6 +280,7 @@ async def api_case_tl_events_export(request: Request):
         ]
         cells = ' | '.join(cells)
         markdown.append(f"| {cells} |")
+    markdown = '\n'.join(markdown)
     response = await stream_response(
         request,
         f'{case_guid}-export.md',
